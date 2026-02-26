@@ -23,7 +23,7 @@ const links = [
 )}
 
 <nav class="nav">
-  <a href="/" class="logo">Gabriel<span class="logo-dot">.</span></a>
+  <a href="/" class="logo">Gabriel Guillou<span class="logo-dot">.</span></a>
   <div class="nav-right">
     {!(maintenance && !isAdmin) && links.map(({ label, href }) => (
       <a
@@ -63,7 +63,79 @@ const links = [
       <a href="/admin/login" class="login-btn">Login</a>
     )}
   </div>
+  <div class="nav-mobile-right">
+    <ThemeToggle client:load />
+    <button class="burger" id="burger-btn" aria-label="Menu">
+      <span class="burger-icon">☰</span>
+    </button>
+  </div>
 </nav>
+
+<!-- Mobile menu panel -->
+<div class="nav-mobile-panel" id="mobile-panel">
+  <div class="mobile-panel-links">
+    {!(maintenance && !isAdmin) && links.map(({ label, href }) => (
+      <a
+        href={href}
+        class:list={["mobile-link", { active: currentPath === href || (href !== "/" && currentPath.startsWith(href)) }]}
+      >
+        {label}
+      </a>
+    ))}
+    {isAdmin && <div class="mobile-divider" />}
+    {isAdmin && (
+      <a
+        href="/admin/blog"
+        class:list={["mobile-link", { active: currentPath === "/admin/blog" }]}
+      >
+        Admin Blog
+      </a>
+    )}
+    {isAdmin && (
+      <a
+        href="/admin/docs"
+        class:list={["mobile-link", { active: currentPath === "/admin/docs" }]}
+      >
+        Admin Docs
+      </a>
+    )}
+    <div class="mobile-divider" />
+    {isAdmin && (
+      <button id="maintenance-btn-mobile" class:list={["maint-btn", { active: maintenance }]}>
+        {maintenance ? "🔧 Maintenance ON" : "🔧 Maintenance OFF"}
+      </button>
+    )}
+    {isAdmin ? (
+      <button id="admin-btn-mobile" class="admin-btn">● Déconnexion</button>
+    ) : (
+      <a href="/admin/login" class="login-btn">Login</a>
+    )}
+  </div>
+</div>
+
+<script is:inline>
+  // Burger toggle
+  (function() {
+    const burger = document.getElementById("burger-btn");
+    const panel = document.getElementById("mobile-panel");
+    if (!burger || !panel) return;
+
+    burger.addEventListener("click", () => {
+      const isOpen = panel.classList.toggle("open");
+      burger.querySelector(".burger-icon").textContent = isOpen ? "✕" : "☰";
+      document.body.style.overflow = isOpen ? "hidden" : "";
+    });
+
+    // Close panel on link click
+    panel.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        panel.classList.remove("open");
+        burger.querySelector(".burger-icon").textContent = "☰";
+        document.body.style.overflow = "";
+      });
+    });
+  })();
+</script>
 
 {isAdmin && (
   <script is:inline>
@@ -71,16 +143,24 @@ const links = [
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/";
     });
-    document.getElementById("maintenance-btn")?.addEventListener("click", async () => {
-      const btn = document.getElementById("maintenance-btn");
-      const isActive = btn.classList.contains("active");
-      const res = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ maintenance: !isActive }),
-      });
-      if (res.ok) window.location.reload();
+    document.getElementById("admin-btn-mobile")?.addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
     });
+    function handleMaintToggle(btn) {
+      if (!btn) return;
+      btn.addEventListener("click", async () => {
+        const isActive = btn.classList.contains("active");
+        const res = await fetch("/api/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ maintenance: !isActive }),
+        });
+        if (res.ok) window.location.reload();
+      });
+    }
+    handleMaintToggle(document.getElementById("maintenance-btn"));
+    handleMaintToggle(document.getElementById("maintenance-btn-mobile"));
   </script>
 )}
 
@@ -225,5 +305,114 @@ const links = [
     background: rgba(245, 158, 11, 0.1);
     border-color: rgba(245, 158, 11, 0.3);
     color: rgb(245, 158, 11);
+  }
+
+  /* ─── Burger button (hidden by default) ─── */
+  .nav-mobile-right {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .burger {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.2rem;
+    line-height: 1;
+  }
+
+  /* ─── Mobile panel ─── */
+  .nav-mobile-panel {
+    display: none;
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg);
+    z-index: 99;
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+  }
+
+  .nav-mobile-panel.open {
+    display: block;
+  }
+
+  .mobile-panel-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-link {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--tertiary);
+    text-decoration: none;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.2s;
+  }
+
+  .mobile-link:hover {
+    color: var(--white);
+  }
+
+  .mobile-link.active {
+    color: var(--blue-hover);
+  }
+
+  .mobile-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 0.5rem 0;
+  }
+
+  /* ─── Tablet: 768–1024px ─── */
+  @media (max-width: 1024px) {
+    .nav {
+      padding: 0 1.5rem;
+    }
+
+    .nav-right {
+      gap: 1.2rem;
+    }
+
+    .nav-divider {
+      display: none;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+    }
+
+    .maintenance-banner {
+      padding: 0.4rem 1.5rem;
+    }
+  }
+
+  /* ─── Mobile: < 800px — burger menu ─── */
+  @media (max-width: 800px) {
+    .nav {
+      padding: 0 1.2rem;
+    }
+
+    .nav-right {
+      display: none;
+    }
+
+    .nav-mobile-right {
+      display: flex;
+    }
+
+    .maintenance-banner {
+      padding: 0.4rem 1.2rem;
+      font-size: 0.72rem;
+    }
   }
 </style>

@@ -38,7 +38,7 @@ const contentHtml = await renderMarkdown(displayContent);
 const toc = extractTOC(displayContent);
 ---
 
-<BaseLayout title={`${post.title} — Gabriel`}>
+<BaseLayout title={`${post.title} — Gabriel Guillou`}>
   <div class="article-page">
     <a href="/blog" class="back-btn">← Retour</a>
 
@@ -208,4 +208,22 @@ const toc = extractTOC(displayContent);
   }
 
   /* md-body styles are in global.css */
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .article-page {
+      padding: 3rem 1.5rem 6rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .article-page {
+      padding: 2rem 1.2rem 4rem;
+    }
+
+    .article-title {
+      font-size: 1.8rem;
+    }
+  }
 </style>

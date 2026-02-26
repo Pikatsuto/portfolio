@@ -96,6 +96,12 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
       ))}
     </aside>
 
+    <!-- Mobile sidebar toggle -->
+    <button class="sidebar-toggle" id="sidebar-toggle">☰ Navigation</button>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- Main content -->
     <main class="doc-content">
       <div class="breadcrumb">
@@ -126,6 +132,35 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
   {isAdmin && <EditButton href={`/admin/docs-edit?id=${activeDoc.id}`} />}
   <MermaidInit />
 </BaseLayout>
+
+<script is:inline>
+  (function() {
+    const toggle = document.getElementById("sidebar-toggle");
+    const sidebar = document.querySelector(".sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    if (!toggle || !sidebar || !overlay) return;
+
+    function openSidebar() {
+      sidebar.classList.add("open");
+      overlay.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    toggle.addEventListener("click", openSidebar);
+    overlay.addEventListener("click", closeSidebar);
+
+    // Close on link click
+    sidebar.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", closeSidebar);
+    });
+  })();
+</script>
 
 <style>
   .docs-reader {
@@ -312,5 +347,89 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
   /* md-body styles are in global.css — only override font-size for docs */
   .md-body {
     font-size: 0.95rem;
+  }
+
+  /* ─── Sidebar toggle (hidden by default) ─── */
+  .sidebar-toggle {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    border-radius: 6px;
+    margin: 1rem 1.2rem 0;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .sidebar-toggle:hover {
+    border-color: var(--blue);
+    color: var(--blue-hover);
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  /* ─── Tablet: hide TOC, 2 columns ─── */
+  @media (max-width: 1024px) {
+    .docs-reader {
+      grid-template-columns: 220px 1fr;
+    }
+
+    .toc-sidebar {
+      display: none;
+    }
+
+    .doc-content {
+      padding: 2rem 2rem 4rem;
+    }
+  }
+
+  /* ─── Mobile: single column, sidebar as overlay ─── */
+  @media (max-width: 768px) {
+    .docs-reader {
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+    }
+
+    .sidebar {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 91;
+      background: var(--bg);
+      padding: 1.5rem 1.2rem;
+      overflow-y: auto;
+    }
+
+    .sidebar.open {
+      display: flex;
+    }
+
+    .sidebar-toggle {
+      display: block;
+    }
+
+    .doc-content {
+      padding: 1.5rem 1.2rem 4rem;
+    }
   }
 </style>

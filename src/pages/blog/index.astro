@@ -29,7 +29,7 @@ const allPosts = isAdmin
   : await query.where(eq(posts.visible, true)).all();
 ---
 
-<BaseLayout title="Journal — Gabriel">
+<BaseLayout title="Journal — Gabriel Guillou">
   <div class="blog-list">
     <div class="blog-header">
       <div>
@@ -196,5 +196,37 @@ const allPosts = isAdmin
     color: var(--tertiary);
     margin-top: 0.8rem;
     display: inline-block;
+  }
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .blog-list {
+      padding: 4rem 1.5rem 6rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .blog-list {
+      padding: 3rem 1.2rem 4rem;
+    }
+
+    .blog-header {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .blog-title {
+      font-size: 2rem;
+    }
+
+    .blog-article {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2.5rem;
+    }
+
+    .article-title {
+      font-size: 1.4rem;
+    }
   }
 </style>

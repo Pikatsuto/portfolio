@@ -41,7 +41,7 @@ const postsWithHistory = await Promise.all(
 const visibleCount = allPosts.filter((p) => p.visible).length;
 ---
 
-<BaseLayout title="Admin Blog — Gabriel">
+<BaseLayout title="Admin Blog — Gabriel Guillou">
   <div class="admin-page">
     <div class="admin-inner">
       <div class="admin-header">
@@ -357,6 +357,44 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
     background: rgba(248, 113, 113, 0.1);
     border-color: rgba(248, 113, 113, 0.3);
     color: var(--red);
+  }
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .admin-page {
+      padding: 0 1.5rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .admin-page {
+      padding: 0 1.2rem;
+    }
+
+    .admin-title {
+      font-size: 1.5rem;
+    }
+
+    .admin-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .action-btn {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.7rem;
+    }
+
+    .publish-btn-sm {
+      padding: 0.15rem 0.5rem;
+      font-size: 0.65rem;
+    }
+
+    .post-actions {
+      gap: 0.4rem;
+    }
   }
 
 </style>

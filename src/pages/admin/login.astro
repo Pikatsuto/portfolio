@@ -7,7 +7,7 @@ if (Astro.locals.isAdmin) {
 }
 ---
 
-<BaseLayout title="Login — Gabriel">
+<BaseLayout title="Login — Gabriel Guillou">
   <div class="login-page">
     <div class="login-card">
       <h1 class="login-title">Connexion<span class="dot">.</span></h1>
@@ -138,5 +138,16 @@ if (Astro.locals.isAdmin) {
     font-size: 0.82rem;
     color: #ef4444;
     margin: 0;
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .login-page {
+      padding: 2rem 1.2rem;
+    }
+
+    .login-title {
+      font-size: 2rem;
+    }
   }
 </style>

@@ -7,7 +7,7 @@ if (Astro.locals.isAdmin) {
 }
 ---
 
-<BaseLayout title="Maintenance — Gabriel">
+<BaseLayout title="Maintenance — Gabriel Guillou">
   <div class="maintenance-page">
     <div class="maintenance-icon">🔧</div>
     <h1 class="maintenance-title">Maintenance en cours<span class="dot">.</span></h1>
@@ -51,5 +51,16 @@ if (Astro.locals.isAdmin) {
     color: var(--secondary);
     max-width: 480px;
     line-height: 1.8;
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .maintenance-title {
+      font-size: 1.8rem;
+    }
+
+    .maintenance-page {
+      padding: 2rem 1.2rem 4rem;
+    }
   }
 </style>

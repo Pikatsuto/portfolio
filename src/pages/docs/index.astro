@@ -30,7 +30,7 @@ const projectStats = await Promise.all(
 const projectsList = projectStats.filter((p) => p.firstId);
 ---
 
-<BaseLayout title="Documentation — Gabriel">
+<BaseLayout title="Documentation — Gabriel Guillou">
   <div class="docs-selector">
     <h1 class="docs-title">Documentation<span class="dot">.</span></h1>
     <p class="docs-subtitle">Sélectionnez un projet pour accéder à sa documentation.</p>
@@ -114,5 +114,27 @@ const projectsList = projectStats.filter((p) => p.firstId);
     font-family: 'DM Sans', sans-serif;
     font-size: 0.8rem;
     color: var(--tertiary);
+  }
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .docs-selector {
+      padding: 4rem 1.5rem 6rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .docs-selector {
+      padding: 3rem 1.2rem 4rem;
+    }
+
+    .docs-title {
+      font-size: 2rem;
+    }
+
+    .project-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

@@ -81,7 +81,7 @@ const visibleCount = allDocs.filter((d) => d.visible).length;
 const sectionNames = [...sectionMap.keys()];
 ---
 
-<BaseLayout title="Admin Documentation — Gabriel">
+<BaseLayout title="Admin Documentation — Gabriel Guillou">
   <div class="admin-page">
     <div class="admin-inner">
       <div class="admin-header">
@@ -623,6 +623,54 @@ const sectionNames = [...sectionMap.keys()];
     align-items: center;
     gap: 0.4rem;
     margin-bottom: 0.4rem;
+  }
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .admin-page {
+      padding: 0 1.5rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .admin-page {
+      padding: 0 1.2rem;
+    }
+
+    .admin-title {
+      font-size: 1.5rem;
+    }
+
+    .admin-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .action-btn {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.7rem;
+    }
+
+    .publish-btn-sm {
+      padding: 0.15rem 0.5rem;
+      font-size: 0.65rem;
+    }
+
+    .doc-actions {
+      gap: 0.4rem;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .project-tabs {
+      flex-wrap: wrap;
+    }
   }
 
 </style>

@@ -14,7 +14,7 @@ const hasDraft = !!row?.draft;
 const history = isAdmin ? await db.select().from(portfolioHistory).all() : [];
 const { frontmatter: fm, body } = parseMDX(displayMdx);
 
-const name = (fm.name as string) || "Gabriel";
+const name = (fm.name as string) || "Gabriel Guillou";
 const role = (fm.role as string) || "";
 const headline = (fm.headline as string) || "";
 const bio = (fm.bio as string) || "";
@@ -387,6 +387,108 @@ function renderHeadline(text: string): string {
 
   .draft-publish-btn:hover {
     opacity: 0.9;
+  }
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .portfolio {
+      padding: 0 1.5rem;
+    }
+
+    .hero-name {
+      font-size: 4.5rem;
+    }
+
+    .portfolio-draft-bar {
+      padding: 0.5rem 1.5rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .portfolio {
+      padding: 0 1.2rem;
+    }
+
+    .hero {
+      padding: 3rem 0 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-name {
+      font-size: 3rem;
+      letter-spacing: -1px;
+    }
+
+    .hero-headline {
+      font-size: 1.3rem;
+    }
+
+    .hero-role {
+      letter-spacing: 2px;
+      font-size: 0.72rem;
+    }
+
+    .hero-bio {
+      font-size: 0.95rem;
+    }
+
+    .skills {
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 3rem;
+      margin-left: 5rem;
+      margin-right: 5rem;
+    }
+
+    .skill {
+      flex: none;
+      min-width: 0;
+      width: 100%;
+      padding: 0.8rem 0;
+    }
+
+    .project {
+      grid-template-columns: 30px 1fr;
+      gap: 0.8rem;
+    }
+
+    .project-num {
+      font-size: 1rem;
+    }
+
+    .project-title {
+      font-size: 1.2rem;
+    }
+
+    .project-tags {
+      grid-column: 2 / -1;
+      justify-content: flex-start;
+      gap: 0.4rem;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.5rem;
+    }
+
+    .stats {
+      margin-top: 2rem;
+      gap: 1rem;
+    }
+
+    .portfolio-draft-bar {
+      padding: 0.5rem 1.2rem;
+    }
+
+    .draft-msg {
+      display: none;
+    }
+
+    .md-body {
+      margin-top: 3rem;
+      padding-bottom: 3rem;
+    }
   }
 </style>
 
