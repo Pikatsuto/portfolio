@@ -5,11 +5,10 @@ import { db } from "../../db";
 import { posts } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
-const allPosts = await db
-  .select()
-  .from(posts)
-  .where(eq(posts.visible, true))
-  .all();
+const isAdmin = Astro.locals.isAdmin;
+const allPosts = isAdmin
+  ? await db.select().from(posts).all()
+  : await db.select().from(posts).where(eq(posts.visible, true)).all();
 ---
 
 <BaseLayout title="Journal — Gabriel">

@@ -1,0 +1,60 @@
+---
+import DraftBadge from "./DraftBadge.astro";
+
+interface Props {
+  hasDraft: boolean;
+  publishUrl: string;
+}
+
+const { hasDraft, publishUrl } = Astro.props;
+---
+
+<div class="admin-bar">
+  {hasDraft && <DraftBadge />}
+  {hasDraft && (
+    <button class="publish-btn" data-publish-url={publishUrl}>Publier</button>
+  )}
+  <div class="spacer" />
+</div>
+
+<script is:inline>
+  document.querySelectorAll(".publish-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-publish-url");
+      const res = await fetch(url, { method: "POST" });
+      if (res.ok) window.location.reload();
+    });
+  });
+</script>
+
+<style>
+  .admin-bar {
+    margin-top: 3rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .publish-btn {
+    background: var(--green);
+    border: none;
+    color: #fff;
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .publish-btn:hover {
+    opacity: 0.9;
+  }
+</style>

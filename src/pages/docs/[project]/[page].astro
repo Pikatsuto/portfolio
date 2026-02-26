@@ -1,19 +1,20 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import AdminBar from "../../../components/AdminBar.astro";
+import EditButton from "../../../components/EditButton.astro";
 import { db } from "../../../db";
 import { docs } from "../../../db/schema";
 import { DOC_SECTIONS_ORDER } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../../lib/markdown";
 
+const isAdmin = Astro.locals.isAdmin;
 const { project, page: pageSlug } = Astro.params;
 
-// All visible docs for this project
-const projectDocs = await db
-  .select()
-  .from(docs)
-  .where(and(eq(docs.project, project!), eq(docs.visible, true)))
-  .all();
+// All visible docs for this project (admin sees all)
+const projectDocs = isAdmin
+  ? await db.select().from(docs).where(eq(docs.project, project!)).all()
+  : await db.select().from(docs).where(and(eq(docs.project, project!), eq(docs.visible, true))).all();
 
 if (projectDocs.length === 0) {
   return Astro.redirect("/docs");
@@ -85,6 +86,12 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
       </div>
       <h1 class="doc-title">{activeDoc.title}<span class="dot">.</span></h1>
       <div class="md-body" set:html={contentHtml} />
+      {isAdmin && (
+        <AdminBar
+          hasDraft={!!activeDoc.draft}
+          publishUrl={`/api/docs/${activeDoc.id}/publish`}
+        />
+      )}
     </main>
 
     <!-- Right TOC -->
@@ -95,6 +102,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
       ))}
     </aside>
   </div>
+  {isAdmin && <EditButton href={`/admin/docs?edit=${activeDoc.id}`} />}
 </BaseLayout>
 
 <style>

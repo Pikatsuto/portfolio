@@ -1,14 +1,17 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import AdminBar from "../../components/AdminBar.astro";
+import EditButton from "../../components/EditButton.astro";
 import { db } from "../../db";
 import { posts } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../lib/markdown";
 
+const isAdmin = Astro.locals.isAdmin;
 const { slug } = Astro.params;
 const post = await db.select().from(posts).where(eq(posts.id, slug!)).get();
 
-if (!post || !post.visible) {
+if (!post || (!post.visible && !isAdmin)) {
   return Astro.redirect("/blog");
 }
 
@@ -45,7 +48,14 @@ const toc = extractTOC(post.content);
     )}
 
     <div class="md-body" set:html={contentHtml} />
+    {isAdmin && (
+      <AdminBar
+        hasDraft={!!post.draft}
+        publishUrl={`/api/posts/${post.id}/publish`}
+      />
+    )}
   </div>
+  {isAdmin && <EditButton href={`/admin/blog?edit=${post.id}`} />}
 </BaseLayout>
 
 <style>

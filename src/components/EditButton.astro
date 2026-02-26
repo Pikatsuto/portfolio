@@ -1,0 +1,36 @@
+---
+interface Props {
+  href: string;
+}
+
+const { href } = Astro.props;
+---
+
+<a href={href} class="edit-fab" title="Modifier">✎</a>
+
+<style>
+  .edit-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 50;
+    background: var(--blue);
+    border: none;
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--blue) 27%, transparent);
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+
+  .edit-fab:hover {
+    transform: scale(1.1);
+  }
+</style>

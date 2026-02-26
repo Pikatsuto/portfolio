@@ -1,11 +1,15 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import DraftBadge from "../components/DraftBadge.astro";
+import EditButton from "../components/EditButton.astro";
 import { db } from "../db";
 import { portfolio } from "../db/schema";
 import { parseMDX, renderMarkdown } from "../lib/markdown";
 
+const isAdmin = Astro.locals.isAdmin;
 const row = await db.select().from(portfolio).get();
 const mdx = row?.content ?? "";
+const hasDraft = !!row?.draft;
 const { frontmatter: fm, body } = parseMDX(mdx);
 
 const name = (fm.name as string) || "Gabriel";
@@ -25,6 +29,14 @@ function renderHeadline(text: string): string {
 ---
 
 <BaseLayout title={`${name} — Portfolio`}>
+  {isAdmin && hasDraft && (
+    <div class="portfolio-draft-bar">
+      <DraftBadge />
+      <span class="draft-msg">Des modifications non publiées sont en attente</span>
+      <div class="draft-spacer" />
+      <button class="draft-publish-btn" data-publish-url="/api/portfolio/publish">Publier</button>
+    </div>
+  )}
   <div class="portfolio">
     <!-- Hero -->
     <div class="hero">
@@ -91,6 +103,7 @@ function renderHeadline(text: string): string {
     <!-- MDX Body -->
     {bodyHtml && <div class="md-body" set:html={bodyHtml} />}
   </div>
+  {isAdmin && <EditButton href="/admin/portfolio" />}
 </BaseLayout>
 
 <style>
@@ -416,4 +429,51 @@ function renderHeadline(text: string): string {
   :root[data-theme="light"] .md-body :global(.shiki span) {
     color: var(--s-light) !important;
   }
+
+  /* ─── Portfolio draft bar ─── */
+  .portfolio-draft-bar {
+    background: color-mix(in srgb, var(--blue) 3%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--blue) 13%, transparent);
+    padding: 0.5rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .draft-msg {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: var(--tertiary);
+  }
+
+  .draft-spacer {
+    flex: 1;
+  }
+
+  .draft-publish-btn {
+    background: var(--green);
+    border: none;
+    color: #fff;
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .draft-publish-btn:hover {
+    opacity: 0.9;
+  }
 </style>
+
+<script is:inline>
+  document.querySelectorAll(".draft-publish-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-publish-url");
+      const res = await fetch(url, { method: "POST" });
+      if (res.ok) window.location.reload();
+    });
+  });
+</script>
