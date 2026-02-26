@@ -33,22 +33,22 @@ const links = [
         {label}
       </a>
     ))}
+    {isAdmin && <div class="nav-divider" />}
     {isAdmin && (
-      <>
-        <div class="nav-divider" />
-        <a
-          href="/admin/blog"
-          class:list={["nav-link", { active: currentPath === "/admin/blog" }]}
-        >
-          Admin Blog
-        </a>
-        <a
-          href="/admin/docs"
-          class:list={["nav-link", { active: currentPath === "/admin/docs" }]}
-        >
-          Admin Docs
-        </a>
-      </>
+      <a
+        href="/admin/blog"
+        class:list={["nav-link", { active: currentPath === "/admin/blog" }]}
+      >
+        Admin Blog
+      </a>
+    )}
+    {isAdmin && (
+      <a
+        href="/admin/docs"
+        class:list={["nav-link", { active: currentPath === "/admin/docs" }]}
+      >
+        Admin Docs
+      </a>
     )}
     <div class="nav-divider" />
     <ThemeToggle client:load />

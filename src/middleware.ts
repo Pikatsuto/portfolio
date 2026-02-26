@@ -31,7 +31,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // --- Maintenance mode ---
-  const maintenance = await isMaintenanceMode();
+  const maintenance = isMaintenanceMode();
   context.locals.maintenance = maintenance;
 
   if (maintenance && !authenticated) {
