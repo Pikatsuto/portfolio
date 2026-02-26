@@ -5,10 +5,26 @@ import ConfirmModal from "../../components/ConfirmModal.astro";
 import VisToggle from "../../components/VisToggle";
 import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
-import { posts, postHistory } from "../../db/schema";
+import { posts, postHistory, categories } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
-const allPosts = await db.select().from(posts).orderBy(posts.sortOrder).all();
+const allPosts = await db
+  .select({
+    id: posts.id,
+    title: posts.title,
+    date: posts.date,
+    cat: categories.name,
+    time: posts.time,
+    excerpt: posts.excerpt,
+    content: posts.content,
+    draft: posts.draft,
+    visible: posts.visible,
+    sortOrder: posts.sortOrder,
+  })
+  .from(posts)
+  .leftJoin(categories, eq(posts.categoryId, categories.id))
+  .orderBy(posts.sortOrder)
+  .all();
 
 // Attach history
 const postsWithHistory = await Promise.all(

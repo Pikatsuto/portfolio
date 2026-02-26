@@ -2,13 +2,26 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Editor from "../../components/Editor";
 import { db } from "../../db";
-import { docs } from "../../db/schema";
+import { docs, sections, projects } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const editId = Astro.url.searchParams.get("id");
 if (!editId) return Astro.redirect("/admin/docs");
 
-const doc = await db.select().from(docs).where(eq(docs.id, editId)).get();
+const doc = await db
+  .select({
+    id: docs.id,
+    title: docs.title,
+    content: docs.content,
+    draft: docs.draft,
+    project: projects.name,
+  })
+  .from(docs)
+  .innerJoin(sections, eq(docs.sectionId, sections.id))
+  .innerJoin(projects, eq(sections.projectId, projects.id))
+  .where(eq(docs.id, editId))
+  .get();
+
 if (!doc) return Astro.redirect("/admin/docs");
 
 const content = doc.draft || doc.content;

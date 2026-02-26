@@ -2,13 +2,31 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import SearchBar from "../../components/SearchBar";
 import { db } from "../../db";
-import { posts } from "../../db/schema";
+import { posts, categories } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const isAdmin = Astro.locals.isAdmin;
+
+const query = db
+  .select({
+    id: posts.id,
+    title: posts.title,
+    date: posts.date,
+    cat: categories.name,
+    time: posts.time,
+    excerpt: posts.excerpt,
+    content: posts.content,
+    draft: posts.draft,
+    visible: posts.visible,
+    sortOrder: posts.sortOrder,
+  })
+  .from(posts)
+  .leftJoin(categories, eq(posts.categoryId, categories.id))
+  .orderBy(posts.sortOrder);
+
 const allPosts = isAdmin
-  ? await db.select().from(posts).orderBy(posts.sortOrder).all()
-  : await db.select().from(posts).where(eq(posts.visible, true)).orderBy(posts.sortOrder).all();
+  ? await query.all()
+  : await query.where(eq(posts.visible, true)).all();
 ---
 
 <BaseLayout title="Journal — Gabriel">

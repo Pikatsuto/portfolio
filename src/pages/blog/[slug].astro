@@ -4,13 +4,30 @@ import AdminBar from "../../components/AdminBar.astro";
 import EditButton from "../../components/EditButton.astro";
 import MermaidInit from "../../components/MermaidInit.astro";
 import { db } from "../../db";
-import { posts } from "../../db/schema";
+import { posts, categories, projects } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../lib/markdown";
 
 const isAdmin = Astro.locals.isAdmin;
 const { slug } = Astro.params;
-const post = await db.select().from(posts).where(eq(posts.id, slug!)).get();
+const post = await db
+  .select({
+    id: posts.id,
+    title: posts.title,
+    date: posts.date,
+    cat: categories.name,
+    time: posts.time,
+    excerpt: posts.excerpt,
+    content: posts.content,
+    draft: posts.draft,
+    visible: posts.visible,
+    docProject: projects.name,
+  })
+  .from(posts)
+  .leftJoin(categories, eq(posts.categoryId, categories.id))
+  .leftJoin(projects, eq(posts.docProjectId, projects.id))
+  .where(eq(posts.id, slug!))
+  .get();
 
 if (!post || (!post.visible && !isAdmin)) {
   return Astro.redirect("/blog");

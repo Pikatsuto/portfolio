@@ -1,15 +1,24 @@
 ---
 import { db } from "../../../db";
-import { docs } from "../../../db/schema";
-import { eq, and } from "drizzle-orm";
+import { docs, sections, projects } from "../../../db/schema";
+import { eq } from "drizzle-orm";
 
 const { project } = Astro.params;
+
+const proj = await db
+  .select({ id: projects.id })
+  .from(projects)
+  .where(eq(projects.name, project!))
+  .get();
+
+if (!proj) return Astro.redirect("/docs");
 
 const firstDoc = await db
   .select({ id: docs.id })
   .from(docs)
-  .where(and(eq(docs.project, project!), eq(docs.visible, true)))
-  .orderBy(docs.sortOrder)
+  .innerJoin(sections, eq(docs.sectionId, sections.id))
+  .where(eq(sections.projectId, proj.id))
+  .orderBy(sections.sortOrder, docs.sortOrder)
   .get();
 
 if (firstDoc) {

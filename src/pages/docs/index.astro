@@ -2,33 +2,32 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DocSearch from "../../components/DocSearch";
 import { db } from "../../db";
-import { docs } from "../../db/schema";
+import { docs, sections, projects as projectsTable } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
-const allDocs = await db
-  .select()
-  .from(docs)
-  .where(eq(docs.visible, true))
-  .all();
+// Get all visible projects with stats
+const allProjects = await db.select().from(projectsTable).where(eq(projectsTable.visible, true)).orderBy(projectsTable.sortOrder).all();
 
-// Derive unique projects and their stats
-const projectMap = new Map<string, { count: number; sections: Set<string>; firstId: string }>();
-for (const d of allDocs) {
-  const entry = projectMap.get(d.project);
-  if (entry) {
-    entry.count++;
-    entry.sections.add(d.section);
-  } else {
-    projectMap.set(d.project, { count: 1, sections: new Set([d.section]), firstId: d.id });
-  }
-}
+const projectStats = await Promise.all(
+  allProjects.map(async (proj) => {
+    const projDocs = await db
+      .select({ id: docs.id, sectionId: docs.sectionId })
+      .from(docs)
+      .innerJoin(sections, eq(docs.sectionId, sections.id))
+      .where(eq(sections.projectId, proj.id))
+      .all();
+    const visibleDocs = projDocs;
+    const sectionSet = new Set(visibleDocs.map((d) => d.sectionId));
+    return {
+      name: proj.name,
+      count: visibleDocs.length,
+      sectionCount: sectionSet.size,
+      firstId: visibleDocs[0]?.id,
+    };
+  }),
+);
 
-const projects = Array.from(projectMap.entries()).map(([name, info]) => ({
-  name,
-  count: info.count,
-  sectionCount: info.sections.size,
-  firstId: info.firstId,
-}));
+const projectsList = projectStats.filter((p) => p.firstId);
 ---
 
 <BaseLayout title="Documentation — Gabriel">
@@ -41,7 +40,7 @@ const projects = Array.from(projectMap.entries()).map(([name, info]) => ({
     </div>
 
     <div class="project-grid">
-      {projects.map((proj) => (
+      {projectsList.map((proj) => (
         <a href={`/docs/${proj.name}/${proj.firstId}`} class="project-card">
           <h3 class="project-name">{proj.name}</h3>
           <p class="project-info">{proj.count} pages · {proj.sectionCount} sections</p>

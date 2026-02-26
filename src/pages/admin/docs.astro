@@ -5,50 +5,68 @@ import ConfirmModal from "../../components/ConfirmModal.astro";
 import VisToggle from "../../components/VisToggle";
 import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
-import { docs, docHistory, settings } from "../../db/schema";
-import { DOC_SECTIONS_ORDER } from "../../db/schema";
+import { docs, docHistory, sections, projects } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
-const allDocs = await db.select().from(docs).all();
-const allProjects = [...new Set(allDocs.map((d) => d.project))];
+// All projects
+const allProjectRows = await db.select().from(projects).orderBy(projects.sortOrder).all();
+const allProjectNames = allProjectRows.map((p) => p.name);
 
 // Active project from query param or first
-const activeProject = Astro.url.searchParams.get("project") || allProjects[0] || "";
-const projectDocs = allDocs.filter((d) => d.project === activeProject);
+const activeProject = Astro.url.searchParams.get("project") || allProjectNames[0] || "";
+const activeProj = allProjectRows.find((p) => p.name === activeProject);
 
-// Read section order from settings (fallback to DOC_SECTIONS_ORDER)
-const sectionOrderRow = await db
-  .select()
-  .from(settings)
-  .where(eq(settings.key, `section-order:${activeProject}`))
-  .get();
-const sectionOrder: string[] = sectionOrderRow
-  ? JSON.parse(sectionOrderRow.value)
-  : DOC_SECTIONS_ORDER;
+// All docs for active project with section info
+const allDocs = activeProj
+  ? await db
+      .select({
+        id: docs.id,
+        section: sections.name,
+        sectionSort: sections.sortOrder,
+        title: docs.title,
+        content: docs.content,
+        draft: docs.draft,
+        visible: docs.visible,
+        sortOrder: docs.sortOrder,
+      })
+      .from(docs)
+      .innerJoin(sections, eq(docs.sectionId, sections.id))
+      .where(eq(sections.projectId, activeProj.id))
+      .all()
+  : [];
 
-// Build sections ordered by sectionOrder
-const sectionMap = new Map<string, typeof projectDocs>();
-for (const d of projectDocs) {
+// Count all docs per project for tabs
+const projectDocCounts = new Map<string, number>();
+for (const proj of allProjectRows) {
+  const count = await db
+    .select({ id: docs.id })
+    .from(docs)
+    .innerJoin(sections, eq(docs.sectionId, sections.id))
+    .where(eq(sections.projectId, proj.id))
+    .all();
+  projectDocCounts.set(proj.name, count.length);
+}
+
+// Build sections ordered by sections.sortOrder
+const sectionMap = new Map<string, typeof allDocs>();
+const sectionSortMap = new Map<string, number>();
+for (const d of allDocs) {
   const items = sectionMap.get(d.section) || [];
   items.push(d);
   sectionMap.set(d.section, items);
+  sectionSortMap.set(d.section, d.sectionSort);
 }
 
-const orderedSections: Array<{ title: string; items: typeof projectDocs }> = [];
-for (const title of sectionOrder) {
-  const items = sectionMap.get(title);
-  if (items && items.length > 0) {
-    orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
-    sectionMap.delete(title);
-  }
-}
-for (const [title, items] of sectionMap) {
-  orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
-}
+const orderedSections = [...sectionMap.entries()]
+  .sort((a, b) => (sectionSortMap.get(a[0]) ?? 0) - (sectionSortMap.get(b[0]) ?? 0))
+  .map(([title, items]) => ({
+    title,
+    items: items.sort((a, b) => a.sortOrder - b.sortOrder),
+  }));
 
 // History
 const docsWithHistory = await Promise.all(
-  projectDocs.map(async (d) => {
+  allDocs.map(async (d) => {
     const history = await db
       .select()
       .from(docHistory)
@@ -59,8 +77,8 @@ const docsWithHistory = await Promise.all(
 );
 
 const docMap = new Map(docsWithHistory.map((d) => [d.id, d]));
-const visibleCount = projectDocs.filter((d) => d.visible).length;
-const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
+const visibleCount = allDocs.filter((d) => d.visible).length;
+const sectionNames = [...sectionMap.keys()];
 ---
 
 <BaseLayout title="Admin Documentation — Gabriel">
@@ -69,20 +87,20 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
       <div class="admin-header">
         <div>
           <h1 class="admin-title">Admin Documentation<span class="dot">.</span></h1>
-          <p class="admin-stats">{projectDocs.length} pages · {sectionNames.length} sections · {visibleCount} publiées</p>
+          <p class="admin-stats">{allDocs.length} pages · {sectionNames.length} sections · {visibleCount} publiées</p>
         </div>
         <button id="new-project-btn" class="new-btn">+ Projet</button>
       </div>
 
       <!-- Project tabs -->
       <div class="project-tabs">
-        {allProjects.map((proj) => (
+        {allProjectNames.map((proj) => (
           <a
             href={`/admin/docs?project=${encodeURIComponent(proj)}`}
             class:list={["project-tab", { active: proj === activeProject }]}
           >
             {proj}
-            <span class="tab-count">{allDocs.filter((d) => d.project === proj).length}</span>
+            <span class="tab-count">{projectDocCounts.get(proj) || 0}</span>
           </a>
         ))}
       </div>

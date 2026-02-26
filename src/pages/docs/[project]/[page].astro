@@ -5,18 +5,36 @@ import EditButton from "../../../components/EditButton.astro";
 import MermaidInit from "../../../components/MermaidInit.astro";
 import DocSearch from "../../../components/DocSearch";
 import { db } from "../../../db";
-import { docs, settings } from "../../../db/schema";
-import { DOC_SECTIONS_ORDER } from "../../../db/schema";
+import { docs, sections, projects } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../../lib/markdown";
 
 const isAdmin = Astro.locals.isAdmin;
 const { project, page: pageSlug } = Astro.params;
 
-// All visible docs for this project (admin sees all)
-const projectDocs = isAdmin
-  ? await db.select().from(docs).where(eq(docs.project, project!)).all()
-  : await db.select().from(docs).where(and(eq(docs.project, project!), eq(docs.visible, true))).all();
+// Resolve project
+const proj = await db.select().from(projects).where(eq(projects.name, project!)).get();
+if (!proj) return Astro.redirect("/docs");
+
+// All docs for this project with section info
+const allRows = await db
+  .select({
+    id: docs.id,
+    sectionId: docs.sectionId,
+    section: sections.name,
+    sectionSort: sections.sortOrder,
+    title: docs.title,
+    content: docs.content,
+    draft: docs.draft,
+    visible: docs.visible,
+    sortOrder: docs.sortOrder,
+  })
+  .from(docs)
+  .innerJoin(sections, eq(docs.sectionId, sections.id))
+  .where(eq(sections.projectId, proj.id))
+  .all();
+
+const projectDocs = isAdmin ? allRows : allRows.filter((d) => d.visible);
 
 if (projectDocs.length === 0) {
   return Astro.redirect("/docs");
@@ -28,36 +46,22 @@ if (!activeDoc) {
   return Astro.redirect(`/docs/${project}/${projectDocs[0].id}`);
 }
 
-// Read section order from settings (fallback to DOC_SECTIONS_ORDER)
-const sectionOrderRow = await db
-  .select()
-  .from(settings)
-  .where(eq(settings.key, `section-order:${project}`))
-  .get();
-const sectionOrder: string[] = sectionOrderRow
-  ? JSON.parse(sectionOrderRow.value)
-  : DOC_SECTIONS_ORDER;
-
-// Build sections ordered by sectionOrder
+// Build sections ordered by sections.sortOrder
 const sectionMap = new Map<string, typeof projectDocs>();
+const sectionSortMap = new Map<string, number>();
 for (const d of projectDocs) {
   const items = sectionMap.get(d.section) || [];
   items.push(d);
   sectionMap.set(d.section, items);
+  sectionSortMap.set(d.section, d.sectionSort);
 }
 
-const orderedSections: Array<{ title: string; items: typeof projectDocs }> = [];
-for (const title of sectionOrder) {
-  const items = sectionMap.get(title);
-  if (items && items.length > 0) {
-    orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
-    sectionMap.delete(title);
-  }
-}
-// Remaining sections not in the predefined order
-for (const [title, items] of sectionMap) {
-  orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
-}
+const orderedSections = [...sectionMap.entries()]
+  .sort((a, b) => (sectionSortMap.get(a[0]) ?? 0) - (sectionSortMap.get(b[0]) ?? 0))
+  .map(([title, items]) => ({
+    title,
+    items: items.sort((a, b) => a.sortOrder - b.sortOrder),
+  }));
 
 const displayContent = isAdmin && activeDoc.draft ? activeDoc.draft : activeDoc.content;
 const contentHtml = await renderMarkdown(displayContent);
