@@ -66,9 +66,10 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
           {s.items.map((item) => (
             <a
               href={`/docs/${project}/${item.id}`}
-              class:list={["sidebar-item", { active: item.id === activeDoc.id }]}
+              class:list={["sidebar-item", { active: item.id === activeDoc.id, hidden: !item.visible }]}
             >
               {item.title}
+              {!item.visible && <span class="hidden-dot">●</span>}
             </a>
           ))}
         </div>
@@ -182,6 +183,18 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     color: var(--blue-hover);
     font-weight: 500;
     border-left-color: var(--blue);
+  }
+
+  .sidebar-item.hidden {
+    color: var(--decorative);
+    font-style: italic;
+  }
+
+  .hidden-dot {
+    font-size: 0.5rem;
+    color: var(--tertiary);
+    margin-left: 0.3rem;
+    vertical-align: middle;
   }
 
   /* ─── Main content ─── */

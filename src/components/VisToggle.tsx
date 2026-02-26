@@ -28,6 +28,15 @@ export default function VisToggle({ visible, postUrl }: Props) {
       textRef.current.textContent = newVal ? "Visible" : "Brouillon";
     }
 
+    // Update the parent item's title (dimmed class toggle)
+    const item = labelRef.current?.closest(".post-item, .doc-item");
+    if (item) {
+      const title = item.querySelector(".post-title, .doc-title");
+      if (title) {
+        title.classList.toggle("dimmed", !newVal);
+      }
+    }
+
     await fetch(postUrl, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

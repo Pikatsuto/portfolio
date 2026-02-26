@@ -35,12 +35,13 @@ const allPosts = isAdmin
     </p>
 
     {allPosts.map((p) => (
-      <article class="blog-article" data-post-id={p.id}>
+      <article class:list={["blog-article", { hidden: !p.visible }]} data-post-id={p.id}>
         <a href={`/blog/${p.id}`} class="article-link">
           <div class="article-meta">
             <span class="article-cat">{p.cat}</span>
             <span class="meta-dot" />
             <span class="article-date">{p.date}</span>
+            {!p.visible && <span class="hidden-badge">masqué</span>}
           </div>
           <h2 class="article-title">{p.title}</h2>
           <p class="article-excerpt">{p.excerpt}</p>
@@ -129,6 +130,25 @@ const allPosts = isAdmin
     font-family: 'DM Sans', sans-serif;
     font-size: 0.82rem;
     color: var(--tertiary);
+  }
+
+  .blog-article.hidden .article-title {
+    color: var(--tertiary);
+  }
+
+  .blog-article.hidden .article-excerpt {
+    color: var(--tertiary);
+  }
+
+  .hidden-badge {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.68rem;
+    color: var(--tertiary);
+    border: 1px solid var(--line);
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .article-title {
