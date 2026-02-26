@@ -24,7 +24,7 @@ ENV PORT=4321
 EXPOSE 4321
 VOLUME ["/app/data"]
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://localhost:4321/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://localhost:4321').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
 
 CMD ["sh", "-c", "node docker-entrypoint.mjs && exec node dist/server/entry.mjs"]
