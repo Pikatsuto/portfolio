@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+
+/* ─── Dark theme (default) ─── */
+:root,
+:root[data-theme="dark"] {
+  --bg: #0c0c12;
+  --surface: #121218;
+  --surface-alt: #16161e;
+  --white: #e8e8ec;
+  --body: #c8c8cc;
+  --secondary: #9a9aa0;
+  --tertiary: #888890;
+  --blue: #3b82f6;
+  --blue-hover: #60a5fa;
+  --decorative: #6e6e78;
+  --line: #1e1e26;
+  --code-bg: #101016;
+  --green: #34d399;
+  --red: #f87171;
+  --nav-bg: rgba(12,12,18,0.92);
+  --hero-gradient: linear-gradient(135deg, rgba(59,130,246,0.06), transparent 60%);
+  --syn-pink: #f472b6;
+  --syn-purple: #e879f9;
+  --syn-green: #34d399;
+  --syn-yellow: #fbbf24;
+}
+
+/* ─── Light theme ─── */
+:root[data-theme="light"] {
+  --bg: #f0f0f4;
+  --surface: #f8f8fa;
+  --surface-alt: #eaeaef;
+  --white: #1a1a24;
+  --body: #3a3a44;
+  --secondary: #5a5a66;
+  --tertiary: #72727e;
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --decorative: #a0a0ac;
+  --line: #dcdce2;
+  --code-bg: #e8e8ee;
+  --green: #059669;
+  --red: #dc2626;
+  --nav-bg: rgba(240,240,244,0.92);
+  --hero-gradient: linear-gradient(135deg, rgba(37,99,235,0.04), transparent 60%);
+  --syn-pink: #be185d;
+  --syn-purple: #7e22ce;
+  --syn-green: #065f46;
+  --syn-yellow: #92400e;
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ─── Base ─── */
+html {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--white);
+  background: var(--bg);
+}
+
+body {
+  min-height: 100vh;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(59,130,246,0.3);
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: var(--line);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) var(--bg);
+}
