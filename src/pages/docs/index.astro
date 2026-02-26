@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import DocSearch from "../../components/DocSearch";
 import { db } from "../../db";
 import { docs } from "../../db/schema";
 import { eq } from "drizzle-orm";
@@ -34,6 +35,10 @@ const projects = Array.from(projectMap.entries()).map(([name, info]) => ({
   <div class="docs-selector">
     <h1 class="docs-title">Documentation<span class="dot">.</span></h1>
     <p class="docs-subtitle">Sélectionnez un projet pour accéder à sa documentation.</p>
+
+    <div class="docs-search">
+      <DocSearch client:visible />
+    </div>
 
     <div class="project-grid">
       {projects.map((proj) => (
@@ -71,6 +76,11 @@ const projects = Array.from(projectMap.entries()).map(([name, info]) => ({
     color: var(--secondary);
     font-size: 1rem;
     margin-bottom: 3rem;
+  }
+
+  .docs-search {
+    max-width: 360px;
+    margin-bottom: 2.5rem;
   }
 
   .project-grid {

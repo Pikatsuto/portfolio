@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import AdminBar from "../../../components/AdminBar.astro";
 import EditButton from "../../../components/EditButton.astro";
+import DocSearch from "../../../components/DocSearch";
 import { db } from "../../../db";
 import { docs } from "../../../db/schema";
 import { DOC_SECTIONS_ORDER } from "../../../db/schema";
@@ -59,6 +60,9 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     <!-- Left sidebar -->
     <aside class="sidebar">
       <a href="/docs" class="back-link">← Tous les projets</a>
+      <div class="sidebar-search">
+        <DocSearch client:visible />
+      </div>
       <h3 class="sidebar-title">{project}</h3>
       {orderedSections.map((s) => (
         <div class="sidebar-section">
@@ -139,6 +143,10 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .back-link:hover {
     color: var(--blue-hover);
+  }
+
+  .sidebar-search {
+    margin-bottom: 1rem;
   }
 
   .sidebar-title {
