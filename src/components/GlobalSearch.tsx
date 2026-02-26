@@ -23,8 +23,11 @@ interface Props {
   posts: Post[];
 }
 
+const ANIM_MS = 150;
+
 export default function GlobalSearch({ posts }: Props) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [query, setQuery] = useState("");
   const [docResults, setDocResults] = useState<DocResult[]>([]);
   const [docLoading, setDocLoading] = useState(false);
@@ -32,39 +35,47 @@ export default function GlobalSearch({ posts }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const closingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const openModal = () => { setClosing(false); setOpen(true); };
+  const closeModal = () => {
+    if (!open || closing) return;
+    setClosing(true);
+    closingTimer.current = setTimeout(() => { setOpen(false); setClosing(false); }, ANIM_MS);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => () => clearTimeout(closingTimer.current), []);
 
   // Keyboard shortcut: Ctrl+K / Cmd+K to open, Escape to close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        if (open && !closing) closeModal();
+        else if (!open) openModal();
       }
-      if (e.key === "Escape") {
-        setOpen(false);
+      if (e.key === "Escape" && open && !closing) {
+        closeModal();
       }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, []);
+  }, [open, closing]);
 
   // Auto-focus the input when modal opens, reset when it closes
   useEffect(() => {
-    if (open) {
-      // Small delay to allow the modal to render
+    if (open && !closing) {
       const t = setTimeout(() => inputRef.current?.focus(), 50);
-      // Prevent body scroll when modal is open
       document.body.style.overflow = "hidden";
-      return () => {
-        clearTimeout(t);
-      };
-    } else {
+      return () => { clearTimeout(t); };
+    } else if (!open) {
       document.body.style.overflow = "";
       setQuery("");
       setDocResults([]);
       setDocLoading(false);
     }
-  }, [open]);
+  }, [open, closing]);
 
   // Debounced doc search
   useEffect(() => {
@@ -111,7 +122,7 @@ export default function GlobalSearch({ posts }: Props) {
   const hasQuery = query.trim().length >= 2;
 
   const navigate = (url: string) => {
-    setOpen(false);
+    closeModal();
     window.location.href = url;
   };
 
@@ -120,7 +131,7 @@ export default function GlobalSearch({ posts }: Props) {
       {/* Trigger button */}
       <button
         ref={btnRef}
-        onClick={() => setOpen(true)}
+        onClick={openModal}
         title="Rechercher (Ctrl+K)"
         style={{
           background: "transparent",
@@ -170,13 +181,15 @@ export default function GlobalSearch({ posts }: Props) {
             alignItems: "flex-start",
             justifyContent: "center",
             paddingTop: "min(20vh, 160px)",
+            animation: closing ? `backdropFadeOut ${ANIM_MS}ms ease-in forwards` : "backdropFadeIn 0.2s ease-out",
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
+            if (e.target === e.currentTarget) closeModal();
           }}
         >
           {/* Modal box */}
           <div
+            className="search-modal-box"
             style={{
               maxWidth: 560,
               width: "90%",
@@ -188,6 +201,7 @@ export default function GlobalSearch({ posts }: Props) {
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              animation: closing ? `searchPopOut ${ANIM_MS}ms ease-in forwards` : "searchPopIn 0.2s ease-out",
             }}
           >
             {/* Search input row */}
@@ -225,7 +239,7 @@ export default function GlobalSearch({ posts }: Props) {
                 }}
               />
               <button
-                onClick={() => setOpen(false)}
+                onClick={closeModal}
                 style={{
                   background: "transparent",
                   border: "1px solid var(--line)",

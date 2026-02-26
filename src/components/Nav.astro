@@ -133,17 +133,30 @@ const links = [
     var menuSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>';
     var closeSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
-    burger.addEventListener("click", () => {
-      const isOpen = panel.classList.toggle("open");
-      burger.querySelector(".burger-icon").innerHTML = isOpen ? closeSvg : menuSvg;
-      document.body.style.overflow = isOpen ? "hidden" : "";
-    });
+    function openPanel() {
+      panel.classList.remove("closing");
+      panel.classList.add("open");
+      burger.querySelector(".burger-icon").innerHTML = closeSvg;
+      document.body.style.overflow = "hidden";
+    }
 
     function closePanel() {
-      panel.classList.remove("open");
+      if (!panel.classList.contains("open") || panel.classList.contains("closing")) return;
+      panel.classList.add("closing");
       burger.querySelector(".burger-icon").innerHTML = menuSvg;
       document.body.style.overflow = "";
+      setTimeout(function() {
+        panel.classList.remove("open", "closing");
+      }, 150);
     }
+
+    burger.addEventListener("click", () => {
+      if (panel.classList.contains("open") && !panel.classList.contains("closing")) {
+        closePanel();
+      } else {
+        openPanel();
+      }
+    });
 
     // Close panel on link click
     panel.querySelectorAll("a").forEach((link) => {
@@ -371,6 +384,16 @@ const links = [
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    animation: backdropFadeIn 0.2s ease-out forwards;
+  }
+
+  .nav-mobile-panel.closing .mobile-backdrop {
+    animation: backdropFadeOut 150ms ease-in forwards;
+  }
+
+  @keyframes backdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .mobile-drawer {
@@ -388,6 +411,20 @@ const links = [
     flex-direction: column;
     gap: 0.3rem;
     animation: slideIn 0.2s ease-out;
+  }
+
+  .nav-mobile-panel.closing .mobile-drawer {
+    animation: slideOut 150ms ease-in forwards;
+  }
+
+  @keyframes slideOut {
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
+  }
+
+  @keyframes backdropFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
 
   @keyframes slideIn {

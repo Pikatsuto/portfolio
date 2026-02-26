@@ -378,3 +378,24 @@ textarea::-webkit-scrollbar-thumb {
   scrollbar-width: thin;
   scrollbar-color: var(--line) var(--bg);
 }
+
+/* ─── Overlay & modal animations ─── */
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdropFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes searchPopIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes searchPopOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(-8px); }
+}
