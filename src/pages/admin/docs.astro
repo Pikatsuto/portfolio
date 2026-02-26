@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DraftBadge from "../../components/DraftBadge.astro";
 import VisToggle from "../../components/VisToggle";
+import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
 import { docs, docHistory } from "../../db/schema";
 import { DOC_SECTIONS_ORDER } from "../../db/schema";
@@ -34,7 +35,7 @@ for (const [title, items] of sectionMap) {
   orderedSections.push({ title, items });
 }
 
-// History counts
+// History
 const docsWithHistory = await Promise.all(
   projectDocs.map(async (d) => {
     const history = await db
@@ -42,7 +43,7 @@ const docsWithHistory = await Promise.all(
       .from(docHistory)
       .where(eq(docHistory.docId, d.id))
       .all();
-    return { ...d, historyCount: history.length };
+    return { ...d, history };
   }),
 );
 
@@ -103,9 +104,7 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
                     <button class="publish-btn-sm" data-publish-url={`/api/docs/${d.id}/publish`}>Publier</button>
                   )}
                   <div class="spacer" />
-                  {dh && dh.historyCount > 0 && (
-                    <span class="history-badge">⎇ {dh.historyCount}</span>
-                  )}
+                  <GitHistory client:load history={dh?.history || []} restoreUrl={`/api/docs/${d.id}/draft`} />
                   <a href={`/admin/docs?edit=${d.id}`} class="action-btn">Éditer</a>
                   <button class="action-btn action-btn-danger" data-delete-url={`/api/docs/${d.id}`}>Supprimer</button>
                 </div>
@@ -420,12 +419,6 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
     font-size: 0.7rem;
     font-weight: 600;
     border-radius: 3px;
-  }
-
-  .history-badge {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
-    color: var(--tertiary);
   }
 
   .action-btn {

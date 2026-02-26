@@ -2,13 +2,14 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DraftBadge from "../../components/DraftBadge.astro";
 import VisToggle from "../../components/VisToggle";
+import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
 import { posts, postHistory } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const allPosts = await db.select().from(posts).all();
 
-// Attach history counts
+// Attach history
 const postsWithHistory = await Promise.all(
   allPosts.map(async (p) => {
     const history = await db
@@ -16,7 +17,7 @@ const postsWithHistory = await Promise.all(
       .from(postHistory)
       .where(eq(postHistory.postId, p.id))
       .all();
-    return { ...p, historyCount: history.length };
+    return { ...p, history };
   }),
 );
 
@@ -50,9 +51,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
                 <button class="publish-btn-sm" data-publish-url={`/api/posts/${p.id}/publish`}>Publier</button>
               )}
               <div class="spacer" />
-              {p.historyCount > 0 && (
-                <span class="history-badge">⎇ {p.historyCount}</span>
-              )}
+              <GitHistory client:load history={p.history} restoreUrl={`/api/posts/${p.id}/draft`} />
               <a href={`/admin/blog?edit=${p.id}`} class="action-btn">Éditer</a>
               <button class="action-btn action-btn-danger" data-delete-url={`/api/posts/${p.id}`}>Supprimer</button>
             </div>
