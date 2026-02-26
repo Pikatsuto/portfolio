@@ -1,0 +1,18 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PortfolioEditor from "../../components/PortfolioEditor";
+import { db } from "../../db";
+import { portfolio } from "../../db/schema";
+
+const row = await db.select().from(portfolio).get();
+const content = row?.draft || row?.content || "";
+---
+
+<BaseLayout title="Éditer — Portfolio" fullHeight>
+  <PortfolioEditor
+    client:only="react"
+    content={content}
+    saveUrl="/api/portfolio/draft"
+    cancelUrl="/"
+  />
+</BaseLayout>

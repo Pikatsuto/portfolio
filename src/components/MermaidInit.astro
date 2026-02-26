@@ -2,7 +2,8 @@
 import mermaid from "mermaid";
 
 mermaid.initialize({
-  startOnLoad: true,
+  startOnLoad: false,
+  suppressErrorRendering: true,
   theme: document.documentElement.getAttribute("data-theme") === "light" ? "default" : "dark",
   themeVariables: {
     primaryColor: "#3b82f6",
@@ -14,5 +15,5 @@ mermaid.initialize({
   },
 });
 
-mermaid.run({ querySelector: ".mermaid" });
+mermaid.run({ querySelector: ".mermaid" }).catch(() => {});
 </script>

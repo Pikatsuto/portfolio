@@ -2,14 +2,16 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import DraftBadge from "../components/DraftBadge.astro";
 import EditButton from "../components/EditButton.astro";
+import GitHistory from "../components/GitHistory";
 import { db } from "../db";
-import { portfolio } from "../db/schema";
+import { portfolio, portfolioHistory } from "../db/schema";
 import { parseMDX, renderMarkdown } from "../lib/markdown";
 
 const isAdmin = Astro.locals.isAdmin;
 const row = await db.select().from(portfolio).get();
 const displayMdx = isAdmin && row?.draft ? row.draft : (row?.content ?? "");
 const hasDraft = !!row?.draft;
+const history = isAdmin ? await db.select().from(portfolioHistory).all() : [];
 const { frontmatter: fm, body } = parseMDX(displayMdx);
 
 const name = (fm.name as string) || "Gabriel";
@@ -29,12 +31,15 @@ function renderHeadline(text: string): string {
 ---
 
 <BaseLayout title={`${name} — Portfolio`}>
-  {isAdmin && hasDraft && (
+  {isAdmin && (hasDraft || history.length > 0) && (
     <div class="portfolio-draft-bar">
-      <DraftBadge />
-      <span class="draft-msg">Des modifications non publiées sont en attente</span>
+      {hasDraft && <DraftBadge />}
+      {hasDraft && <span class="draft-msg">Des modifications non publiées sont en attente</span>}
       <div class="draft-spacer" />
-      <button class="draft-publish-btn" data-publish-url="/api/portfolio/publish">Publier</button>
+      <GitHistory client:load history={history} restoreUrl="/api/portfolio/draft" />
+      {hasDraft && (
+        <button class="draft-publish-btn" data-publish-url="/api/portfolio/publish">Publier</button>
+      )}
     </div>
   )}
   <div class="portfolio">

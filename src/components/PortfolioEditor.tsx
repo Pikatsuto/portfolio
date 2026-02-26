@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect, memo } from "react";
+import yaml from "js-yaml";
 import "../styles/editor.css";
+import "../styles/portfolio-editor.css";
 import { Marked } from "marked";
 import mermaid from "mermaid";
 import {
@@ -11,15 +13,42 @@ import {
   Table, Superscript, Subscript,
 } from "lucide-react";
 
-interface Props {
-  content: string;
-  title?: string;
-  saveUrl: string;
-  cancelUrl: string;
-  onTitleChange?: boolean;
+/* ─── Types ─── */
+
+interface Frontmatter {
+  name?: string;
+  role?: string;
+  headline?: string;
+  bio?: string;
+  skills?: Array<{ name: string; details: string }>;
+  projects?: Array<{ title: string; description: string; tags?: string[]; blog?: string; docs?: string }>;
+  stats?: Array<{ value: string; label: string }>;
+  [key: string]: unknown;
 }
 
-/* ── Initialize marked with custom renderer matching server-side classes ── */
+interface Props {
+  content: string;
+  cancelUrl: string;
+  saveUrl: string;
+}
+
+/* ─── MDX parsing / serialization ─── */
+
+function parseMDX(mdx: string): { frontmatter: Frontmatter; body: string } {
+  const match = mdx.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!match) return { frontmatter: {}, body: mdx };
+  return {
+    frontmatter: (yaml.load(match[1]) as Frontmatter) || {},
+    body: match[2].trim(),
+  };
+}
+
+function serializeMDX(frontmatter: Frontmatter, body: string): string {
+  return `---\n${yaml.dump(frontmatter, { lineWidth: -1, noRefs: true })}---\n\n${body}`;
+}
+
+/* ─── Marked + Mermaid setup (client-only) ─── */
+
 const marked = new Marked({
   gfm: true,
   breaks: false,
@@ -43,7 +72,6 @@ const marked = new Marked({
   },
 });
 
-/* ── Initialize mermaid ── */
 mermaid.initialize({
   startOnLoad: false,
   suppressErrorRendering: true,
@@ -61,9 +89,9 @@ mermaid.initialize({
 /* ══════════════════════════════════════════
    Syntax-highlighted textarea — line-level diff
    ══════════════════════════════════════════ */
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** Highlight a single line (without trailing \n) */
 function highlightLine(line: string, inCode: boolean): string {
   const el = esc(line);
   if (line.startsWith("```")) return `<span style="color:var(--tertiary)">${el}</span>`;
@@ -91,18 +119,15 @@ function highlightLine(line: string, inCode: boolean): string {
   }).join("");
 }
 
-/** Compute highlighted HTML + inCode state for each line */
-function highlightLines(text: string): { htmls: string[]; codes: boolean[] } {
+function highlightLines(text: string): { htmls: string[] } {
   const lines = text.split("\n");
   let inCode = false;
   const htmls: string[] = [];
-  const codes: boolean[] = [];
   for (const line of lines) {
-    codes.push(inCode);
     htmls.push(highlightLine(line, inCode));
     if (line.startsWith("```")) inCode = !inCode;
   }
-  return { htmls, codes };
+  return { htmls };
 }
 
 const HighlightedTextarea = memo(function HighlightedTextarea({ defaultValue, onInput, style, onScroll }: {
@@ -115,7 +140,6 @@ const HighlightedTextarea = memo(function HighlightedTextarea({ defaultValue, on
   const preRef = useRef<HTMLPreElement>(null);
   const prevRef = useRef<string[]>([]);
 
-  // Initial render: create one <div> per line inside the pre
   useEffect(() => {
     const pre = preRef.current;
     if (!pre) return;
@@ -139,7 +163,6 @@ const HighlightedTextarea = memo(function HighlightedTextarea({ defaultValue, on
     const prev = prevRef.current;
     const children = pre.children;
 
-    // Update only changed lines
     const common = Math.min(htmls.length, prev.length);
     for (let i = 0; i < common; i++) {
       if (htmls[i] !== prev[i]) {
@@ -147,7 +170,6 @@ const HighlightedTextarea = memo(function HighlightedTextarea({ defaultValue, on
       }
     }
 
-    // Add new lines
     if (htmls.length > prev.length) {
       const frag = document.createDocumentFragment();
       for (let i = prev.length; i < htmls.length; i++) {
@@ -158,7 +180,6 @@ const HighlightedTextarea = memo(function HighlightedTextarea({ defaultValue, on
       pre.appendChild(frag);
     }
 
-    // Remove excess lines
     while (pre.children.length > htmls.length) {
       pre.removeChild(pre.lastChild!);
     }
@@ -215,38 +236,33 @@ const HighlightedTextarea = memo(function HighlightedTextarea({ defaultValue, on
 /* ══════════════════════════════════════════
    Imperative preview render (no React state)
    ══════════════════════════════════════════ */
+
 async function renderToPreview(el: HTMLDivElement, markdown: string) {
   const html = await marked.parse(markdown);
 
-  // Diff top-level children instead of replacing innerHTML
   const tmp = document.createElement("div");
   tmp.innerHTML = html;
   const newChildren = Array.from(tmp.childNodes);
   const oldChildren = Array.from(el.childNodes);
 
-  // Update / replace changed nodes
   const common = Math.min(newChildren.length, oldChildren.length);
   for (let i = 0; i < common; i++) {
     const o = oldChildren[i];
     const n = newChildren[i];
-    // Skip mermaid-rendered blocks (already transformed to SVG)
     if (o instanceof HTMLElement && o.getAttribute("data-mermaid-rendered")) continue;
     if (!o.isEqualNode(n)) {
       el.replaceChild(n, o);
     }
   }
 
-  // Add new nodes
   for (let i = common; i < newChildren.length; i++) {
     el.appendChild(newChildren[i]);
   }
 
-  // Remove excess old nodes
   while (el.childNodes.length > newChildren.length) {
     el.removeChild(el.lastChild!);
   }
 
-  // Render mermaid diagrams
   const mermaidBlocks = el.querySelectorAll<HTMLElement>("code.language-mermaid");
   for (let i = 0; i < mermaidBlocks.length; i++) {
     const block = mermaidBlocks[i];
@@ -255,7 +271,7 @@ async function renderToPreview(el: HTMLDivElement, markdown: string) {
     const text = block.textContent || "";
     if (!text.trim()) continue;
     container.setAttribute("data-mermaid-rendered", "true");
-    const id = `mermaid-ed-${Date.now()}-${i}`;
+    const id = `mermaid-pe-${Date.now()}-${i}`;
     try {
       const { svg } = await mermaid.render(id, text);
       container.innerHTML = svg;
@@ -264,7 +280,6 @@ async function renderToPreview(el: HTMLDivElement, markdown: string) {
       container.style.textAlign = "center";
       container.style.padding = "1rem 0";
     } catch {
-      // Clean up orphan element mermaid may have left in the body
       document.getElementById(id)?.remove();
       document.getElementById("d" + id)?.remove();
     }
@@ -274,20 +289,50 @@ async function renderToPreview(el: HTMLDivElement, markdown: string) {
 /* ══════════════════════════════════════════
    Toolbar item type
    ══════════════════════════════════════════ */
+
 type TbItem = { icon: React.ReactNode; label: string; a: () => void; sep?: never } | { sep: 1; icon?: never; label?: never; a?: never };
 
 /* ══════════════════════════════════════════
-   Main Editor component
+   Main PortfolioEditor component
    ══════════════════════════════════════════ */
-export default function Editor({ content, title: initialTitle, saveUrl, cancelUrl, onTitleChange }: Props) {
-  const mdRef = useRef(content);
+
+export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) {
+  const { frontmatter: initialFM, body: initialBody } = parseMDX(content);
+
+  const [frontmatter, setFrontmatter] = useState<Frontmatter>(initialFM);
+  const [yamlTab, setYamlTab] = useState("general");
+  const mdRef = useRef(initialBody);
   const previewTimer = useRef(0);
   const [mode, setMode] = useState<"edit" | "split" | "preview">("split");
-  const [title, setTitle] = useState(initialTitle || "");
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // Initial preview render + re-render when mode makes preview visible
+  /* ── YAML helpers ── */
+
+  const updateFM = (k: string, v: unknown) =>
+    setFrontmatter(f => ({ ...f, [k]: v }));
+
+  const updateArr = (k: string, i: number, field: string, v: unknown) =>
+    setFrontmatter(fm => {
+      const arr = [...((fm[k] as Array<Record<string, unknown>>) || [])];
+      arr[i] = { ...arr[i], [field]: v };
+      return { ...fm, [k]: arr };
+    });
+
+  const removeArr = (k: string, i: number) =>
+    setFrontmatter(f => ({
+      ...f,
+      [k]: (f[k] as unknown[]).filter((_, j) => j !== i),
+    }));
+
+  const addArr = (k: string, template: Record<string, unknown>) =>
+    setFrontmatter(f => ({
+      ...f,
+      [k]: [...((f[k] as unknown[]) || []), template],
+    }));
+
+  /* ── Preview ── */
+
   useEffect(() => {
     if (mode !== "edit" && previewRef.current) {
       renderToPreview(previewRef.current, mdRef.current);
@@ -308,13 +353,14 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
     }, 150);
   }, []);
 
+  /* ── Toolbar ── */
+
   const insert = useCallback((before: string, after = "") => {
-    const ta = document.querySelector<HTMLTextAreaElement>("textarea");
+    const ta = document.querySelector<HTMLTextAreaElement>(".mdx-editor-area textarea");
     if (!ta) return;
     ta.focus();
     const s = ta.selectionStart, e = ta.selectionEnd;
     const sel = ta.value.slice(s, e) || "texte";
-    // execCommand preserves the native undo stack
     document.execCommand("insertText", false, before + sel + after);
     updatePreview(ta.value);
     const selStart = s + before.length;
@@ -350,15 +396,16 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
     { icon: <Table size={sz} />, label: "Tableau", a: () => insert("\n| Col1 | Col2 |\n| --- | --- |\n| ", " | |\n") },
   ];
 
+  /* ── Save ── */
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const body: Record<string, string> = { content: mdRef.current };
-      if (onTitleChange && title) body.title = title;
+      const mdxContent = serializeMDX(frontmatter, mdRef.current);
       const res = await fetch(saveUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ content: mdxContent }),
       });
       if (res.ok) window.location.href = cancelUrl;
     } finally {
@@ -372,28 +419,121 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
     { key: "preview", label: "Aperçu" },
   ];
 
+  const yamlTabs: Array<[string, string]> = [
+    ["general", "Général"],
+    ["skills", `Skills (${(frontmatter.skills || []).length})`],
+    ["projects", `Projets (${(frontmatter.projects || []).length})`],
+    ["stats", `Stats (${(frontmatter.stats || []).length})`],
+  ];
+
   return (
     <div className="editor-root">
       {/* Header */}
       <div className="editor-header">
         <div className="editor-header-left">
-          <span className="editor-label">Éditeur</span>
-          {onTitleChange && (
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className="editor-title-input" />
-          )}
+          <span className="mdx-label">MDX</span>
+          <span className="mdx-title">Portfolio</span>
         </div>
         <div className="editor-header-right">
-          {modes.map((m) => (
-            <button key={m.key} onClick={() => setMode(m.key)} className={`editor-mode-btn${mode === m.key ? " active" : ""}`}>{m.label}</button>
-          ))}
-          <div className="editor-sep" />
           <button onClick={() => { window.location.href = cancelUrl; }} className="editor-cancel-btn">Annuler</button>
-          <button onClick={handleSave} disabled={saving} className={`editor-save-btn${saving ? " saving" : ""}`}>{saving ? "Sauvegarde..." : "Sauvegarder"}</button>
+          <button onClick={handleSave} disabled={saving} className={`editor-save-btn${saving ? " saving" : ""}`}>
+            {saving ? "Sauvegarde..." : "Sauvegarder"}
+          </button>
+        </div>
+      </div>
+
+      {/* YAML tabs */}
+      <div className="yaml-section">
+        <div className="yaml-tabs">
+          <span className="yaml-tabs-label">YAML</span>
+          {yamlTabs.map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setYamlTab(id)}
+              className={`yaml-tab${yamlTab === id ? " active" : ""}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="yaml-form">
+          {yamlTab === "general" && (
+            <div className="yaml-grid">
+              <div>
+                <label className="yaml-label">Nom</label>
+                <input value={frontmatter.name || ""} onChange={e => updateFM("name", e.target.value)} className="yaml-input" />
+              </div>
+              <div>
+                <label className="yaml-label">Rôle</label>
+                <input value={frontmatter.role || ""} onChange={e => updateFM("role", e.target.value)} className="yaml-input" />
+              </div>
+              <div className="yaml-full">
+                <label className="yaml-label">Headline</label>
+                <input value={frontmatter.headline || ""} onChange={e => updateFM("headline", e.target.value)} className="yaml-input" />
+              </div>
+              <div className="yaml-full">
+                <label className="yaml-label">Bio</label>
+                <textarea value={frontmatter.bio || ""} onChange={e => updateFM("bio", e.target.value)} rows={2} className="yaml-input yaml-textarea" />
+              </div>
+            </div>
+          )}
+
+          {yamlTab === "skills" && (
+            <div>
+              {(frontmatter.skills || []).map((s, i) => (
+                <div key={i} className="yaml-arr-row yaml-arr-row--skills">
+                  <input value={s.name || ""} onChange={e => updateArr("skills", i, "name", e.target.value)} placeholder="Nom" className="yaml-input" />
+                  <input value={s.details || ""} onChange={e => updateArr("skills", i, "details", e.target.value)} placeholder="Détails" className="yaml-input" />
+                  <button onClick={() => removeArr("skills", i)} className="yaml-remove-btn">×</button>
+                </div>
+              ))}
+              <button onClick={() => addArr("skills", { name: "", details: "" })} className="yaml-add-btn">+ Skill</button>
+            </div>
+          )}
+
+          {yamlTab === "projects" && (
+            <div>
+              {(frontmatter.projects || []).map((p, i) => (
+                <div key={i} className="yaml-project-card">
+                  <div className="yaml-arr-row yaml-arr-row--title">
+                    <input value={p.title || ""} onChange={e => updateArr("projects", i, "title", e.target.value)} className="yaml-input yaml-input--bold" placeholder="Titre" />
+                    <button onClick={() => removeArr("projects", i)} className="yaml-remove-btn">×</button>
+                  </div>
+                  <input value={p.description || ""} onChange={e => updateArr("projects", i, "description", e.target.value)} className="yaml-input" placeholder="Description" />
+                  <div className="yaml-arr-row yaml-arr-row--meta">
+                    <input
+                      value={Array.isArray(p.tags) ? p.tags.join(", ") : ""}
+                      onChange={e => updateArr("projects", i, "tags", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                      placeholder="Tags (virgules)"
+                      className="yaml-input"
+                    />
+                    <input value={p.blog || ""} onChange={e => updateArr("projects", i, "blog", e.target.value)} placeholder="Blog slug" className="yaml-input yaml-input--sm" />
+                    <input value={p.docs || ""} onChange={e => updateArr("projects", i, "docs", e.target.value)} placeholder="Docs projet" className="yaml-input yaml-input--sm" />
+                  </div>
+                </div>
+              ))}
+              <button onClick={() => addArr("projects", { title: "", description: "", tags: [] })} className="yaml-add-btn">+ Projet</button>
+            </div>
+          )}
+
+          {yamlTab === "stats" && (
+            <div>
+              {(frontmatter.stats || []).map((s, i) => (
+                <div key={i} className="yaml-arr-row yaml-arr-row--stats">
+                  <input value={s.value || ""} onChange={e => updateArr("stats", i, "value", e.target.value)} className="yaml-input yaml-input--value" placeholder="Valeur" />
+                  <input value={s.label || ""} onChange={e => updateArr("stats", i, "label", e.target.value)} className="yaml-input" placeholder="Label" />
+                  <button onClick={() => removeArr("stats", i)} className="yaml-remove-btn">×</button>
+                </div>
+              ))}
+              <button onClick={() => addArr("stats", { value: "", label: "" })} className="yaml-add-btn">+ Stat</button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="editor-toolbar">
+        <span className="yaml-tabs-label">MDX</span>
         {tb.map((item, i) =>
           item.sep ? (
             <div key={i} className="editor-toolbar-sep" />
@@ -416,13 +556,17 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
             </button>
           )
         )}
+        <div style={{ flex: 1 }} />
+        {modes.map((m) => (
+          <button key={m.key} onClick={() => setMode(m.key)} className={`editor-mode-btn${mode === m.key ? " active" : ""}`}>{m.label}</button>
+        ))}
       </div>
 
       {/* Editor area */}
-      <div className={`editor-area editor-area--${mode}`}>
+      <div className={`editor-area mdx-editor-area editor-area--${mode}`}>
         {mode !== "preview" && (
           <HighlightedTextarea
-            defaultValue={content}
+            defaultValue={initialBody}
             onInput={updatePreview}
             onScroll={mode === "split" ? syncPreviewScroll : undefined}
             style={{ borderRight: mode === "split" ? "1px solid var(--line)" : "none" }}

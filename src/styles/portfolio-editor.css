@@ -1,0 +1,205 @@
+/* ─── MDX header labels ─── */
+
+.mdx-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  color: var(--blue);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.mdx-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ─── YAML section ─── */
+
+.yaml-section {
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.yaml-tabs {
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--line);
+}
+
+.yaml-tabs-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--blue);
+  padding: 0.6rem 0.8rem 0.6rem 0;
+  border-right: 1px solid var(--line);
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.yaml-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--tertiary);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  transition: color 0.2s, background 0.2s;
+}
+
+.yaml-tab:hover {
+  color: var(--secondary);
+}
+
+.yaml-tab.active {
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+  border-bottom-color: var(--blue);
+  color: var(--blue-hover);
+}
+
+.yaml-form {
+  padding: 1.2rem 1.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* ─── Form fields ─── */
+
+.yaml-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.yaml-full {
+  grid-column: 1 / -1;
+}
+
+.yaml-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  color: var(--tertiary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+  display: block;
+  font-weight: 500;
+}
+
+.yaml-input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--white);
+  padding: 0.5rem 0.7rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.yaml-input:focus {
+  border-color: color-mix(in srgb, var(--blue) 50%, transparent);
+}
+
+.yaml-input--bold {
+  font-weight: 600;
+}
+
+.yaml-input--value {
+  font-weight: 700;
+  text-align: center;
+}
+
+.yaml-input--sm {
+  max-width: 150px;
+}
+
+.yaml-textarea {
+  resize: vertical;
+}
+
+/* ─── Array rows ─── */
+
+.yaml-arr-row {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.yaml-arr-row--skills {
+  grid-template-columns: 150px 1fr 32px;
+}
+
+.yaml-arr-row--stats {
+  grid-template-columns: 100px 1fr 32px;
+}
+
+.yaml-arr-row--title {
+  grid-template-columns: 1fr 32px;
+}
+
+.yaml-arr-row--meta {
+  grid-template-columns: 1fr 150px 150px;
+}
+
+.yaml-remove-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--red);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.yaml-remove-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* ─── Project cards ─── */
+
+.yaml-project-card {
+  padding: 0.8rem;
+  background: var(--surface-alt);
+  border-radius: 6px;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ─── Add buttons ─── */
+
+.yaml-add-btn {
+  background: color-mix(in srgb, var(--blue) 6%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--blue) 27%, transparent);
+  color: var(--blue-hover);
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 4px;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.yaml-add-btn:hover {
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}
