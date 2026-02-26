@@ -1,13 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DraftBadge from "../../components/DraftBadge.astro";
+import ConfirmModal from "../../components/ConfirmModal.astro";
 import VisToggle from "../../components/VisToggle";
 import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
 import { posts, postHistory } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
-const allPosts = await db.select().from(posts).all();
+const allPosts = await db.select().from(posts).orderBy(posts.sortOrder).all();
 
 // Attach history
 const postsWithHistory = await Promise.all(
@@ -37,13 +38,18 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
 
       <div class="post-list">
         {postsWithHistory.map((p) => (
-          <div class="post-item" data-post-id={p.id}>
-            <div class="post-meta">
-              <span class="post-cat">{p.cat}</span>
-              <span class="post-date">{p.date}</span>
-              <span class="post-chars">{p.content.length}c</span>
+          <div class="post-item" data-post-id={p.id} draggable="true">
+            <div class="post-top">
+              <span class="drag-handle" title="Glisser pour réordonner">⠿</span>
+              <div class="post-top-content">
+                <div class="post-meta">
+                  <span class="post-cat">{p.cat}</span>
+                  <span class="post-date">{p.date}</span>
+                  <span class="post-chars">{p.content.length}c</span>
+                </div>
+                <h3 class:list={["post-title", { dimmed: !p.visible }]}>{p.title}</h3>
+              </div>
             </div>
-            <h3 class:list={["post-title", { dimmed: !p.visible }]}>{p.title}</h3>
             <div class="post-actions">
               <VisToggle client:load visible={p.visible} postUrl={`/api/posts/${p.id}`} />
               {p.draft && <DraftBadge />}
@@ -52,7 +58,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
               )}
               <div class="spacer" />
               <GitHistory client:load history={p.history} restoreUrl={`/api/posts/${p.id}/draft`} />
-              <a href={`/admin/blog?edit=${p.id}`} class="action-btn">Éditer</a>
+              <a href={`/admin/blog-edit?id=${p.id}`} class="action-btn">Éditer</a>
               <button class="action-btn action-btn-danger" data-delete-url={`/api/posts/${p.id}`}>Supprimer</button>
             </div>
           </div>
@@ -60,6 +66,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
       </div>
     </div>
   </div>
+  <ConfirmModal />
 </BaseLayout>
 
 <script is:inline>
@@ -92,10 +99,53 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
   // Delete buttons
   document.querySelectorAll(".action-btn-danger").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Supprimer cet article ?")) return;
+      if (!(await window.__confirmModal("Supprimer cet article ?"))) return;
       const url = btn.getAttribute("data-delete-url");
       const res = await fetch(url, { method: "DELETE" });
       if (res.ok) window.location.reload();
+    });
+  });
+
+  // Drag & drop reorder
+  let dragItem = null;
+  let handleGrabbed = false;
+  const list = document.querySelector(".post-list");
+
+  // Track mousedown on handles
+  document.querySelectorAll(".drag-handle").forEach((h) => {
+    h.addEventListener("mousedown", () => { handleGrabbed = true; });
+  });
+  document.addEventListener("mouseup", () => { handleGrabbed = false; });
+
+  document.querySelectorAll(".post-item").forEach((item) => {
+    item.addEventListener("dragstart", (e) => {
+      if (!handleGrabbed) { e.preventDefault(); return; }
+      dragItem = item;
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    item.addEventListener("dragend", async () => {
+      item.classList.remove("dragging");
+      handleGrabbed = false;
+      dragItem = null;
+      const ids = [...list.querySelectorAll(".post-item")].map((el) => el.getAttribute("data-post-id"));
+      await fetch("/api/posts/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+    });
+    item.addEventListener("dragover", (e) => {
+      if (!dragItem || item === dragItem) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const rect = item.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (e.clientY < mid) {
+        list.insertBefore(dragItem, item);
+      } else {
+        list.insertBefore(dragItem, item.nextSibling);
+      }
     });
   });
 </script>
@@ -161,6 +211,42 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
   .post-item {
     padding: 1.2rem 0;
     border-bottom: 1px solid var(--line);
+    transition: opacity 0.2s;
+  }
+
+  .post-item.dragging {
+    opacity: 0.3;
+  }
+
+  .post-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .post-top-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .drag-handle {
+    cursor: grab;
+    color: var(--tertiary);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.2rem 0;
+    user-select: none;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .drag-handle:hover {
+    color: var(--blue-hover);
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
   }
 
   .post-meta {
@@ -256,4 +342,5 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
     border-color: rgba(248, 113, 113, 0.3);
     color: var(--red);
   }
+
 </style>

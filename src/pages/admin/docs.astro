@@ -1,10 +1,11 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DraftBadge from "../../components/DraftBadge.astro";
+import ConfirmModal from "../../components/ConfirmModal.astro";
 import VisToggle from "../../components/VisToggle";
 import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
-import { docs, docHistory } from "../../db/schema";
+import { docs, docHistory, settings } from "../../db/schema";
 import { DOC_SECTIONS_ORDER } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
@@ -15,7 +16,17 @@ const allProjects = [...new Set(allDocs.map((d) => d.project))];
 const activeProject = Astro.url.searchParams.get("project") || allProjects[0] || "";
 const projectDocs = allDocs.filter((d) => d.project === activeProject);
 
-// Build sections ordered by DOC_SECTIONS_ORDER
+// Read section order from settings (fallback to DOC_SECTIONS_ORDER)
+const sectionOrderRow = await db
+  .select()
+  .from(settings)
+  .where(eq(settings.key, `section-order:${activeProject}`))
+  .get();
+const sectionOrder: string[] = sectionOrderRow
+  ? JSON.parse(sectionOrderRow.value)
+  : DOC_SECTIONS_ORDER;
+
+// Build sections ordered by sectionOrder
 const sectionMap = new Map<string, typeof projectDocs>();
 for (const d of projectDocs) {
   const items = sectionMap.get(d.section) || [];
@@ -24,15 +35,15 @@ for (const d of projectDocs) {
 }
 
 const orderedSections: Array<{ title: string; items: typeof projectDocs }> = [];
-for (const title of DOC_SECTIONS_ORDER) {
+for (const title of sectionOrder) {
   const items = sectionMap.get(title);
   if (items && items.length > 0) {
-    orderedSections.push({ title, items });
+    orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
     sectionMap.delete(title);
   }
 }
 for (const [title, items] of sectionMap) {
-  orderedSections.push({ title, items });
+  orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
 }
 
 // History
@@ -83,9 +94,12 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
 
       <!-- Sections -->
       {orderedSections.map((s) => (
-        <div class="section-block">
+        <div class="section-block" data-section={s.title} draggable="true">
           <div class="section-header">
-            <h2 class="section-name">{s.title}</h2>
+            <div class="section-left">
+              <span class="drag-handle section-drag" title="Glisser pour réordonner">⠿</span>
+              <h2 class="section-name">{s.title}</h2>
+            </div>
             <div class="section-btns">
               <button class="add-page-btn" data-project={activeProject} data-section={s.title}>+ Page</button>
               <button class="del-section-btn" data-project={activeProject} data-section={s.title}>Supprimer section</button>
@@ -94,8 +108,11 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
           {s.items.map((d) => {
             const dh = docMap.get(d.id);
             return (
-              <div class="doc-item">
-                <h3 class:list={["doc-title", { dimmed: !d.visible }]}>{d.title}</h3>
+              <div class="doc-item" data-doc-id={d.id} data-section={d.section} draggable="true">
+                <div class="doc-top">
+                  <span class="drag-handle page-drag" title="Glisser pour réordonner">⠿</span>
+                  <h3 class:list={["doc-title", { dimmed: !d.visible }]}>{d.title}</h3>
+                </div>
                 <div class="doc-actions">
                   <VisToggle client:load visible={d.visible} postUrl={`/api/docs/${d.id}`} />
                   <span class="doc-chars">{d.content.length}c</span>
@@ -105,7 +122,7 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
                   )}
                   <div class="spacer" />
                   <GitHistory client:load history={dh?.history || []} restoreUrl={`/api/docs/${d.id}/draft`} />
-                  <a href={`/admin/docs?edit=${d.id}`} class="action-btn">Éditer</a>
+                  <a href={`/admin/docs-edit?id=${d.id}`} class="action-btn">Éditer</a>
                   <button class="action-btn action-btn-danger" data-delete-url={`/api/docs/${d.id}`}>Supprimer</button>
                 </div>
               </div>
@@ -115,12 +132,13 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
       ))}
     </div>
   </div>
+  <ConfirmModal />
 </BaseLayout>
 
 <script is:inline>
   // New project
   document.getElementById("new-project-btn")?.addEventListener("click", async () => {
-    const name = prompt("Nom du nouveau projet :");
+    const name = await window.__promptModal("Nom du nouveau projet :");
     if (!name || !name.trim()) return;
     const res = await fetch("/api/docs", {
       method: "POST",
@@ -137,7 +155,7 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
 
   // New section
   document.getElementById("new-section-btn")?.addEventListener("click", async () => {
-    const name = prompt("Nom de la nouvelle section :");
+    const name = await window.__promptModal("Nom de la nouvelle section :");
     if (!name || !name.trim()) return;
     const params = new URLSearchParams(window.location.search);
     const project = params.get("project") || document.querySelector(".project-tab.active")?.textContent?.trim()?.split(/\d/)[0]?.trim();
@@ -179,7 +197,7 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
     btn.addEventListener("click", async () => {
       const section = btn.getAttribute("data-section");
       const project = btn.getAttribute("data-project");
-      if (!confirm(`Supprimer "${section}" et toutes ses pages ?`)) return;
+      if (!(await window.__confirmModal('Supprimer "' + section + '" et toutes ses pages ?'))) return;
       const res = await fetch("/api/docs/section", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -201,12 +219,115 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
   // Delete doc
   document.querySelectorAll(".action-btn-danger").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Supprimer cette page ?")) return;
+      if (!(await window.__confirmModal("Supprimer cette page ?"))) return;
       const url = btn.getAttribute("data-delete-url");
       const res = await fetch(url, { method: "DELETE" });
       if (res.ok) window.location.reload();
     });
   });
+
+  // --- Drag & drop handle tracking ---
+  let grabbedType = null; // "section" or "page"
+  document.querySelectorAll(".section-drag").forEach((h) => {
+    h.addEventListener("mousedown", () => { grabbedType = "section"; });
+  });
+  document.querySelectorAll(".page-drag").forEach((h) => {
+    h.addEventListener("mousedown", () => { grabbedType = "page"; });
+  });
+  document.addEventListener("mouseup", () => { grabbedType = null; });
+
+  // --- Section drag & drop ---
+  let dragSection = null;
+  const inner = document.querySelector(".admin-inner");
+
+  document.querySelectorAll(".section-block").forEach((block) => {
+    block.addEventListener("dragstart", (e) => {
+      if (grabbedType !== "section") { e.preventDefault(); return; }
+      dragSection = block;
+      block.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.stopPropagation();
+    });
+    block.addEventListener("dragend", async () => {
+      block.classList.remove("dragging");
+      dragSection = null;
+      grabbedType = null;
+      const params = new URLSearchParams(window.location.search);
+      const project = params.get("project") || document.querySelector(".project-tab.active")?.textContent?.trim()?.split(/\d/)[0]?.trim();
+      const sections = [...inner.querySelectorAll(".section-block")].map((el) => el.getAttribute("data-section"));
+      await fetch("/api/docs/section-order", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project, sections }),
+      });
+    });
+    block.addEventListener("dragover", (e) => {
+      if (!dragSection || dragSection === block) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const rect = block.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (e.clientY < mid) {
+        inner.insertBefore(dragSection, block);
+      } else {
+        inner.insertBefore(dragSection, block.nextSibling);
+      }
+    });
+  });
+
+  // --- Page drag & drop within section ---
+  let dragPage = null;
+
+  document.querySelectorAll(".doc-item").forEach((item) => {
+    item.addEventListener("dragstart", (e) => {
+      if (grabbedType !== "page") { e.preventDefault(); return; }
+      dragPage = item;
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.stopPropagation();
+    });
+    item.addEventListener("dragend", async () => {
+      item.classList.remove("dragging");
+      dragPage = null;
+      grabbedType = null;
+      const sectionBlock = item.closest(".section-block");
+      const newSection = sectionBlock.getAttribute("data-section");
+      const oldSection = item.getAttribute("data-section");
+      const docId = item.getAttribute("data-doc-id");
+
+      // If moved to a different section, update the section field
+      if (newSection !== oldSection) {
+        await fetch(`/api/docs/${docId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ section: newSection }),
+        });
+        item.setAttribute("data-section", newSection);
+      }
+
+      // Update sort order within the new section
+      const ids = [...sectionBlock.querySelectorAll(".doc-item")].map((el) => el.getAttribute("data-doc-id"));
+      await fetch("/api/docs/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+    });
+    item.addEventListener("dragover", (e) => {
+      if (!dragPage || dragPage === item) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const sectionBlock = item.closest(".section-block");
+      const rect = item.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (e.clientY < mid) {
+        sectionBlock.insertBefore(dragPage, item);
+      } else {
+        sectionBlock.insertBefore(dragPage, item.nextSibling);
+      }
+    });
+  });
+
 </script>
 
 <style>
@@ -334,6 +455,12 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
     border-bottom: 1px solid var(--line);
   }
 
+  .section-left {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
   .section-name {
     font-family: 'Playfair Display', serif;
     font-size: 1.2rem;
@@ -445,4 +572,39 @@ const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
     border-color: rgba(248, 113, 113, 0.3);
     color: var(--red);
   }
+
+  .drag-handle {
+    cursor: grab;
+    color: var(--tertiary);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.2rem 0;
+    user-select: none;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .drag-handle:hover {
+    color: var(--blue-hover);
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .section-block.dragging {
+    opacity: 0.3;
+  }
+
+  .doc-item.dragging {
+    opacity: 0.3;
+  }
+
+  .doc-top {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+
 </style>

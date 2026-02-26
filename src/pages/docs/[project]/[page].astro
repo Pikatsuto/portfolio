@@ -2,9 +2,10 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import AdminBar from "../../../components/AdminBar.astro";
 import EditButton from "../../../components/EditButton.astro";
+import MermaidInit from "../../../components/MermaidInit.astro";
 import DocSearch from "../../../components/DocSearch";
 import { db } from "../../../db";
-import { docs } from "../../../db/schema";
+import { docs, settings } from "../../../db/schema";
 import { DOC_SECTIONS_ORDER } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../../lib/markdown";
@@ -27,7 +28,17 @@ if (!activeDoc) {
   return Astro.redirect(`/docs/${project}/${projectDocs[0].id}`);
 }
 
-// Build sections (ordered by DOC_SECTIONS_ORDER)
+// Read section order from settings (fallback to DOC_SECTIONS_ORDER)
+const sectionOrderRow = await db
+  .select()
+  .from(settings)
+  .where(eq(settings.key, `section-order:${project}`))
+  .get();
+const sectionOrder: string[] = sectionOrderRow
+  ? JSON.parse(sectionOrderRow.value)
+  : DOC_SECTIONS_ORDER;
+
+// Build sections ordered by sectionOrder
 const sectionMap = new Map<string, typeof projectDocs>();
 for (const d of projectDocs) {
   const items = sectionMap.get(d.section) || [];
@@ -36,20 +47,21 @@ for (const d of projectDocs) {
 }
 
 const orderedSections: Array<{ title: string; items: typeof projectDocs }> = [];
-for (const title of DOC_SECTIONS_ORDER) {
+for (const title of sectionOrder) {
   const items = sectionMap.get(title);
   if (items && items.length > 0) {
-    orderedSections.push({ title, items });
+    orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
     sectionMap.delete(title);
   }
 }
 // Remaining sections not in the predefined order
 for (const [title, items] of sectionMap) {
-  orderedSections.push({ title, items });
+  orderedSections.push({ title, items: items.sort((a, b) => a.sortOrder - b.sortOrder) });
 }
 
-const contentHtml = await renderMarkdown(activeDoc.content);
-const toc = extractTOC(activeDoc.content);
+const displayContent = isAdmin && activeDoc.draft ? activeDoc.draft : activeDoc.content;
+const contentHtml = await renderMarkdown(displayContent);
+const toc = extractTOC(displayContent);
 
 // First doc in the active section (for breadcrumb link)
 const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section);
@@ -107,7 +119,8 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
       ))}
     </aside>
   </div>
-  {isAdmin && <EditButton href={`/admin/docs?edit=${activeDoc.id}`} />}
+  {isAdmin && <EditButton href={`/admin/docs-edit?id=${activeDoc.id}`} />}
+  <MermaidInit />
 </BaseLayout>
 
 <style>
@@ -292,89 +305,8 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     border-left-color: var(--blue);
   }
 
-  /* ─── MDX Body ─── */
+  /* md-body styles are in global.css — only override font-size for docs */
   .md-body {
-    font-family: 'DM Sans', sans-serif;
-    color: var(--body);
-    line-height: 1.9;
     font-size: 0.95rem;
-  }
-
-  .md-body :global(.md-h2) {
-    font-family: 'Playfair Display', serif;
-    color: var(--white);
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin: 2.5rem 0 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .md-body :global(.md-h3) {
-    font-family: 'Playfair Display', serif;
-    color: var(--white);
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin: 2rem 0 0.8rem;
-  }
-
-  .md-body :global(p) {
-    margin-bottom: 0.8rem;
-    line-height: 1.9;
-  }
-
-  .md-body :global(ul) {
-    padding-left: 1.2rem;
-    margin-bottom: 1.2rem;
-  }
-
-  .md-body :global(li) {
-    margin-bottom: 0.4rem;
-    color: var(--body);
-    line-height: 1.8;
-  }
-
-  .md-body :global(strong) {
-    color: var(--white);
-    font-weight: 600;
-  }
-
-  .md-body :global(.md-inline-code) {
-    background: var(--code-bg);
-    border: 1px solid var(--line);
-    padding: 0.1rem 0.35rem;
-    border-radius: 3px;
-    font-size: 0.88em;
-    color: var(--blue-hover);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .md-body :global(.md-code) {
-    margin: 1.2rem 0;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .md-body :global(.md-code pre) {
-    background: var(--code-bg) !important;
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--blue);
-    padding: 1rem 1.3rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.84rem;
-    line-height: 1.7;
-    overflow-x: auto;
-  }
-
-  .md-body :global(.md-code-plain) {
-    color: var(--blue-hover);
-  }
-
-  .md-body :global(.shiki span) {
-    color: var(--s-dark) !important;
-  }
-
-  :root[data-theme="light"] .md-body :global(.shiki span) {
-    color: var(--s-light) !important;
   }
 </style>
