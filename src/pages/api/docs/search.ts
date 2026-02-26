@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { db } from "../../../db";
-import { docs } from "../../../db/schema";
+import { docs, sections, projects } from "../../../db/schema";
 import { like, or, eq } from "drizzle-orm";
 
 export const GET: APIRoute = async ({ url }) => {
@@ -14,8 +14,17 @@ export const GET: APIRoute = async ({ url }) => {
 
   const pattern = `%${q}%`;
   const results = await db
-    .select()
+    .select({
+      id: docs.id,
+      project: projects.name,
+      section: sections.name,
+      title: docs.title,
+      content: docs.content,
+      visible: docs.visible,
+    })
     .from(docs)
+    .innerJoin(sections, eq(docs.sectionId, sections.id))
+    .innerJoin(projects, eq(sections.projectId, projects.id))
     .where(
       or(
         like(docs.title, pattern),
@@ -52,7 +61,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Truncate preview
     if (preview.length > 120) {
-      preview = preview.substring(0, 120) + "…";
+      preview = preview.substring(0, 120) + "\u2026";
     }
 
     return {

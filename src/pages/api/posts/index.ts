@@ -1,16 +1,38 @@
 import type { APIRoute } from "astro";
 import { db } from "../../../db";
-import { posts, postHistory } from "../../../db/schema";
+import { posts, postHistory, categories, projects } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin } from "../../../lib/auth";
+import { resolveCategoryId, resolveProjectId } from "../../../lib/resolve";
 
 export const GET: APIRoute = async ({ request }) => {
   const admin = isAdmin(request);
 
-  const allPosts = await db.select().from(posts).all();
+  const rows = await db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      date: posts.date,
+      categoryId: posts.categoryId,
+      cat: categories.name,
+      time: posts.time,
+      excerpt: posts.excerpt,
+      content: posts.content,
+      draft: posts.draft,
+      visible: posts.visible,
+      sortOrder: posts.sortOrder,
+      docProjectId: posts.docProjectId,
+      docProject: projects.name,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+    })
+    .from(posts)
+    .leftJoin(categories, eq(posts.categoryId, categories.id))
+    .leftJoin(projects, eq(posts.docProjectId, projects.id))
+    .all();
 
   const result = await Promise.all(
-    allPosts
+    rows
       .filter((p) => admin || p.visible)
       .map(async (p) => {
         const history = await db
@@ -47,6 +69,7 @@ export const POST: APIRoute = async ({ request }) => {
     .replace(/(^-|-$)/g, "");
 
   const now = new Date().toISOString();
+  const categoryId = await resolveCategoryId(body.cat);
 
   // Push all existing posts down by 1, new article gets sortOrder 0
   const all = await db.select().from(posts).all();
@@ -58,19 +81,39 @@ export const POST: APIRoute = async ({ request }) => {
     id,
     title: body.title,
     date: body.date,
-    cat: body.cat,
+    categoryId,
     time: body.time,
     excerpt: body.excerpt,
     content: body.content,
     draft: null,
     visible: false,
     sortOrder: 0,
-    docProject: null,
+    docProjectId: null,
     createdAt: now,
     updatedAt: now,
   });
 
-  const created = await db.select().from(posts).where(eq(posts.id, id)).get();
+  const created = await db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      date: posts.date,
+      cat: categories.name,
+      time: posts.time,
+      excerpt: posts.excerpt,
+      content: posts.content,
+      draft: posts.draft,
+      visible: posts.visible,
+      sortOrder: posts.sortOrder,
+      docProject: projects.name,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+    })
+    .from(posts)
+    .leftJoin(categories, eq(posts.categoryId, categories.id))
+    .leftJoin(projects, eq(posts.docProjectId, projects.id))
+    .where(eq(posts.id, id))
+    .get();
 
   return new Response(JSON.stringify(created), {
     status: 201,

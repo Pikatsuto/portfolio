@@ -1,22 +1,37 @@
 import type { APIRoute } from "astro";
 import { db } from "../../../db";
-import { docs, docHistory } from "../../../db/schema";
+import { docs, docHistory, sections, projects } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
 import { isAdmin } from "../../../lib/auth";
+import { resolveProjectId, resolveSectionId } from "../../../lib/resolve";
 
 export const GET: APIRoute = async ({ request, url }) => {
   const admin = isAdmin(request);
-  const project = url.searchParams.get("project");
+  const projectName = url.searchParams.get("project");
+
+  let query = db
+    .select({
+      id: docs.id,
+      sectionId: docs.sectionId,
+      project: projects.name,
+      section: sections.name,
+      title: docs.title,
+      content: docs.content,
+      draft: docs.draft,
+      visible: docs.visible,
+      sortOrder: docs.sortOrder,
+      createdAt: docs.createdAt,
+      updatedAt: docs.updatedAt,
+    })
+    .from(docs)
+    .innerJoin(sections, eq(docs.sectionId, sections.id))
+    .innerJoin(projects, eq(sections.projectId, projects.id));
 
   let allDocs;
-  if (project) {
-    allDocs = await db
-      .select()
-      .from(docs)
-      .where(eq(docs.project, project))
-      .all();
+  if (projectName) {
+    allDocs = await query.where(eq(projects.name, projectName)).all();
   } else {
-    allDocs = await db.select().from(docs).all();
+    allDocs = await query.all();
   }
 
   const result = await Promise.all(
@@ -52,11 +67,14 @@ export const POST: APIRoute = async ({ request }) => {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+  const projectId = await resolveProjectId(body.project);
+  const sectionId = await resolveSectionId(projectId, body.section);
+
   // Determine sort order: max + 1 within section
   const siblings = await db
     .select()
     .from(docs)
-    .where(and(eq(docs.project, body.project), eq(docs.section, body.section)))
+    .where(eq(docs.sectionId, sectionId))
     .all();
   const maxSort = siblings.reduce((max, d) => Math.max(max, d.sortOrder), -1);
 
@@ -64,8 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   await db.insert(docs).values({
     id,
-    project: body.project,
-    section: body.section,
+    sectionId,
     title: body.title,
     content: body.content,
     draft: null,
@@ -75,7 +92,24 @@ export const POST: APIRoute = async ({ request }) => {
     updatedAt: now,
   });
 
-  const created = await db.select().from(docs).where(eq(docs.id, id)).get();
+  const created = await db
+    .select({
+      id: docs.id,
+      project: projects.name,
+      section: sections.name,
+      title: docs.title,
+      content: docs.content,
+      draft: docs.draft,
+      visible: docs.visible,
+      sortOrder: docs.sortOrder,
+      createdAt: docs.createdAt,
+      updatedAt: docs.updatedAt,
+    })
+    .from(docs)
+    .innerJoin(sections, eq(docs.sectionId, sections.id))
+    .innerJoin(projects, eq(sections.projectId, projects.id))
+    .where(eq(docs.id, id))
+    .get();
 
   return new Response(JSON.stringify(created), {
     status: 201,

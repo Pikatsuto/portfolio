@@ -1,26 +1,48 @@
 import type { APIRoute } from "astro";
 import { db } from "../../../db";
-import { posts, postHistory } from "../../../db/schema";
+import { posts, postHistory, categories, projects } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin } from "../../../lib/auth";
+import { resolveCategoryId, resolveProjectId } from "../../../lib/resolve";
 
 export const GET: APIRoute = async ({ params, request }) => {
-  const post = await db.select().from(posts).where(eq(posts.id, params.id!)).get();
-  if (!post) {
+  const row = await db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      date: posts.date,
+      cat: categories.name,
+      time: posts.time,
+      excerpt: posts.excerpt,
+      content: posts.content,
+      draft: posts.draft,
+      visible: posts.visible,
+      sortOrder: posts.sortOrder,
+      docProject: projects.name,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+    })
+    .from(posts)
+    .leftJoin(categories, eq(posts.categoryId, categories.id))
+    .leftJoin(projects, eq(posts.docProjectId, projects.id))
+    .where(eq(posts.id, params.id!))
+    .get();
+
+  if (!row) {
     return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
   }
 
   const admin = isAdmin(request);
-  if (!admin && !post.visible) {
+  if (!admin && !row.visible) {
     return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
   }
 
   const history = admin
-    ? await db.select().from(postHistory).where(eq(postHistory.postId, post.id)).all()
+    ? await db.select().from(postHistory).where(eq(postHistory.postId, row.id)).all()
     : [];
 
   return new Response(
-    JSON.stringify({ ...post, draft: admin ? post.draft : null, history }),
+    JSON.stringify({ ...row, draft: admin ? row.draft : null, history }),
     { headers: { "Content-Type": "application/json" } },
   );
 };
@@ -42,12 +64,47 @@ export const PUT: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify({ error: "Not found" }), { status: 404 });
   }
 
-  await db
-    .update(posts)
-    .set({ ...body, updatedAt: new Date().toISOString() })
-    .where(eq(posts.id, params.id!));
+  // Resolve string fields to FK IDs
+  const updates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  if (body.title !== undefined) updates.title = body.title;
+  if (body.date !== undefined) updates.date = body.date;
+  if (body.time !== undefined) updates.time = body.time;
+  if (body.excerpt !== undefined) updates.excerpt = body.excerpt;
+  if (body.visible !== undefined) updates.visible = body.visible;
+  if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+  if (body.cat !== undefined) {
+    updates.categoryId = await resolveCategoryId(body.cat);
+  }
+  if (body.docProject !== undefined) {
+    updates.docProjectId = body.docProject
+      ? await resolveProjectId(body.docProject)
+      : null;
+  }
 
-  const updated = await db.select().from(posts).where(eq(posts.id, params.id!)).get();
+  await db.update(posts).set(updates).where(eq(posts.id, params.id!));
+
+  const updated = await db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      date: posts.date,
+      cat: categories.name,
+      time: posts.time,
+      excerpt: posts.excerpt,
+      content: posts.content,
+      draft: posts.draft,
+      visible: posts.visible,
+      sortOrder: posts.sortOrder,
+      docProject: projects.name,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+    })
+    .from(posts)
+    .leftJoin(categories, eq(posts.categoryId, categories.id))
+    .leftJoin(projects, eq(posts.docProjectId, projects.id))
+    .where(eq(posts.id, params.id!))
+    .get();
+
   return new Response(JSON.stringify(updated), {
     headers: { "Content-Type": "application/json" },
   });
