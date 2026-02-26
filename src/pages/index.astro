@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import ConfirmModal from "../components/ConfirmModal.astro";
 import DraftBadge from "../components/DraftBadge.astro";
 import EditButton from "../components/EditButton.astro";
 import GitHistory from "../components/GitHistory";
@@ -54,6 +55,7 @@ function renderHeadline(text: string): string {
     <!-- Skills -->
     {skills.length > 0 && (
       <div class="skills">
+        <h2 class="sr-only">Compétences</h2>
         {skills.map((s) => (
           <div class="skill">
             <div class="skill-name">{s.name}</div>
@@ -72,14 +74,15 @@ function renderHeadline(text: string): string {
         </div>
         <div class="projects-list">
           {projects.map((p, i) => (
-            <div class="project">
+            <div class:list={["project", { clickable: !!p.blog }]}>
               <span class="project-num">{String(i + 1).padStart(2, "0")}</span>
               <div class="project-content">
-                <h3 class="project-title">{p.title}</h3>
+                <h3 class="project-title">
+                  {p.blog ? <a href={`/blog/${p.blog}`} class="project-link">{p.title}</a> : p.title}
+                </h3>
                 <p class="project-desc">{p.description}</p>
                 <div class="project-links">
-                  {p.blog && <a href={`/blog/${p.blog}`} class="link-btn">Article →</a>}
-                  {p.docs && <a href={`/docs/${p.docs}`} class="link-btn">Docs →</a>}
+                  {p.docs && <a href={`/docs/${p.docs}`} class="docs-btn">{p.docs && "Docs"}</a>}
                 </div>
               </div>
               <div class="project-tags">
@@ -96,6 +99,7 @@ function renderHeadline(text: string): string {
     <!-- Stats -->
     {stats.length > 0 && (
       <div class="stats" style={`grid-template-columns: repeat(${stats.length}, 1fr);`}>
+        <h2 class="sr-only">Chiffres clés</h2>
         {stats.map((s) => (
           <div class="stat">
             <div class="stat-value">{s.value}</div>
@@ -106,14 +110,20 @@ function renderHeadline(text: string): string {
     )}
 
     <!-- MDX Body -->
-    {bodyHtml && <div class="md-body" set:html={bodyHtml} />}
+    {bodyHtml && (
+      <>
+        <h2 class="sr-only">Présentation</h2>
+        <div class="md-body" set:html={bodyHtml} />
+      </>
+    )}
   </div>
   {isAdmin && <EditButton href="/admin/portfolio" />}
+  <ConfirmModal />
 </BaseLayout>
 
 <style>
   .portfolio {
-    max-width: 1100px;
+    max-width: var(--content-max-width);
     width: 100%;
     margin: 0 auto;
     padding: 0 3rem;
@@ -128,7 +138,7 @@ function renderHeadline(text: string): string {
 
   .hero-role {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     color: var(--blue);
     letter-spacing: 4px;
     text-transform: uppercase;
@@ -138,7 +148,7 @@ function renderHeadline(text: string): string {
 
   .hero-name {
     font-family: 'Playfair Display', serif;
-    font-size: 6rem;
+    font-size: var(--fs-hero);
     font-weight: 700;
     line-height: 1;
     margin-bottom: 1.5rem;
@@ -148,7 +158,7 @@ function renderHeadline(text: string): string {
 
   .hero-headline {
     font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
+    font-size: var(--fs-h2);
     font-weight: 400;
     color: var(--secondary);
     font-style: italic;
@@ -163,7 +173,7 @@ function renderHeadline(text: string): string {
 
   .hero-bio {
     color: var(--secondary);
-    font-size: 1.05rem;
+    font-size: var(--fs-body-lg);
     line-height: 1.8;
     font-family: 'DM Sans', sans-serif;
     max-width: 560px;
@@ -182,19 +192,14 @@ function renderHeadline(text: string): string {
   .skill {
     padding: 1rem 1.5rem;
     border-bottom: 2px solid var(--line);
-    transition: border-color 0.3s;
     flex: 1 1 0;
     min-width: 160px;
     text-align: center;
   }
 
-  .skill:hover {
-    border-bottom-color: var(--blue);
-  }
-
   .skill-name {
     font-family: 'Playfair Display', serif;
-    font-size: 1rem;
+    font-size: var(--fs-body);
     font-weight: 600;
     color: var(--white);
     margin-bottom: 0.2rem;
@@ -202,7 +207,7 @@ function renderHeadline(text: string): string {
 
   .skill-details {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--tertiary);
   }
 
@@ -216,7 +221,7 @@ function renderHeadline(text: string): string {
 
   .projects-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2rem;
+    font-size: var(--fs-h2);
     font-weight: 700;
     color: var(--white);
   }
@@ -227,7 +232,7 @@ function renderHeadline(text: string): string {
 
   .projects-count {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
   }
 
@@ -246,7 +251,7 @@ function renderHeadline(text: string): string {
 
   .project-num {
     font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
+    font-size: var(--fs-h3);
     color: var(--decorative);
     font-style: italic;
     transition: color 0.3s;
@@ -258,7 +263,7 @@ function renderHeadline(text: string): string {
 
   .project-title {
     font-family: 'Playfair Display', serif;
-    font-size: 1.5rem;
+    font-size: var(--fs-h3);
     font-weight: 600;
     margin-bottom: 0.4rem;
     color: var(--white);
@@ -269,10 +274,35 @@ function renderHeadline(text: string): string {
     color: var(--blue-hover);
   }
 
+
+  .project {
+    position: relative;
+  }
+
+  .project.clickable {
+    cursor: pointer;
+  }
+
+  .project:not(.clickable) .project-num { color: var(--decorative); }
+  .project:not(.clickable):hover .project-num { color: var(--decorative); }
+  .project:not(.clickable):hover .project-title { color: var(--white); }
+
+  /* Stretched link: the <a> inside the title covers the entire project card */
+  .project-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .project-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
   .project-desc {
     font-family: 'DM Sans', sans-serif;
     color: var(--secondary);
-    font-size: 0.92rem;
+    font-size: var(--fs-body);
     line-height: 1.6;
     margin-bottom: 0.6rem;
   }
@@ -283,23 +313,24 @@ function renderHeadline(text: string): string {
     align-items: center;
   }
 
-  .link-btn {
-    background: none;
-    border: 1px solid var(--line);
-    color: var(--tertiary);
-    padding: 0.25rem 0.7rem;
+  .docs-btn {
+    position: relative;
+    z-index: 1;
+    background: color-mix(in srgb, var(--blue) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blue) 25%, transparent);
+    color: var(--blue-hover);
+    padding: 0.35rem 0.9rem;
     cursor: pointer;
-    font-size: 0.72rem;
+    font-size: var(--fs-xs);
     font-family: 'DM Sans', sans-serif;
     border-radius: 4px;
-    font-weight: 500;
-    transition: color 0.2s, border-color 0.2s;
+    font-weight: 600;
+    transition: background 0.2s;
     text-decoration: none;
   }
 
-  .link-btn:hover {
-    color: var(--blue-hover);
-    border-color: color-mix(in srgb, var(--blue) 27%, transparent);
+  .docs-btn:hover {
+    background: color-mix(in srgb, var(--blue) 15%, transparent);
   }
 
   .project-tags {
@@ -312,7 +343,7 @@ function renderHeadline(text: string): string {
 
   .tag {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
     border: 1px solid var(--line);
     padding: 0.2rem 0.6rem;
@@ -325,20 +356,19 @@ function renderHeadline(text: string): string {
     display: grid;
     gap: 2rem;
     padding: 2.5rem 0;
-    border-top: 1px solid var(--line);
     text-align: center;
   }
 
   .stat-value {
     font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
+    font-size: var(--fs-h1);
     font-weight: 700;
     color: var(--blue);
   }
 
   .stat-label {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -349,7 +379,7 @@ function renderHeadline(text: string): string {
   .md-body {
     margin-top: 5rem;
     padding-bottom: 6rem;
-    font-size: 0.95rem;
+    font-size: var(--fs-body);
   }
 
   /* ─── Portfolio draft bar ─── */
@@ -364,7 +394,7 @@ function renderHeadline(text: string): string {
 
   .draft-msg {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
   }
 
@@ -379,7 +409,7 @@ function renderHeadline(text: string): string {
     padding: 0.35rem 1rem;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.78rem;
+    font-size: var(--fs-xs);
     font-weight: 600;
     border-radius: 4px;
     transition: background 0.2s;
@@ -393,10 +423,6 @@ function renderHeadline(text: string): string {
   @media (max-width: 1024px) {
     .portfolio {
       padding: 0 1.5rem;
-    }
-
-    .hero-name {
-      font-size: 4.5rem;
     }
 
     .portfolio-draft-bar {
@@ -416,21 +442,11 @@ function renderHeadline(text: string): string {
     }
 
     .hero-name {
-      font-size: 3rem;
       letter-spacing: -1px;
-    }
-
-    .hero-headline {
-      font-size: 1.3rem;
     }
 
     .hero-role {
       letter-spacing: 2px;
-      font-size: 0.72rem;
-    }
-
-    .hero-bio {
-      font-size: 0.95rem;
     }
 
     .skills {
@@ -453,14 +469,6 @@ function renderHeadline(text: string): string {
       gap: 0.8rem;
     }
 
-    .project-num {
-      font-size: 1rem;
-    }
-
-    .project-title {
-      font-size: 1.2rem;
-    }
-
     .project-tags {
       grid-column: 2 / -1;
       justify-content: flex-start;
@@ -468,7 +476,6 @@ function renderHeadline(text: string): string {
     }
 
     .tag {
-      font-size: 0.68rem;
       padding: 0.15rem 0.5rem;
     }
 

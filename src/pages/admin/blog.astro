@@ -41,12 +41,12 @@ const postsWithHistory = await Promise.all(
 const visibleCount = allPosts.filter((p) => p.visible).length;
 ---
 
-<BaseLayout title="Admin Blog — Gabriel Guillou">
+<BaseLayout title="Admin Articles — Gabriel Guillou">
   <div class="admin-page">
     <div class="admin-inner">
       <div class="admin-header">
         <div>
-          <h1 class="admin-title">Admin Blog<span class="dot">.</span></h1>
+          <h1 class="admin-title">Admin Articles<span class="dot">.</span></h1>
           <p class="admin-stats">{allPosts.length} articles · {visibleCount} publiés</p>
         </div>
         <button id="new-post-btn" class="new-btn">+ Nouvel article</button>
@@ -63,7 +63,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
                   <span class="post-date">{p.date}</span>
                   <span class="post-chars">{p.content.length}c</span>
                 </div>
-                <h3 class:list={["post-title", { dimmed: !p.visible }]}>{p.title}</h3>
+                <h2 class:list={["post-title", { dimmed: !p.visible }]}>{p.title}</h2>
               </div>
             </div>
             <div class="post-actions">
@@ -168,7 +168,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
 
 <style>
   .admin-page {
-    max-width: 1100px;
+    max-width: var(--content-max-width);
     width: 100%;
     margin: 0 auto;
     padding: 0 3rem;
@@ -187,7 +187,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
 
   .admin-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2rem;
+    font-size: var(--fs-h1);
     font-weight: 700;
     color: var(--white);
   }
@@ -199,7 +199,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
   .admin-stats {
     font-family: 'DM Sans', sans-serif;
     color: var(--tertiary);
-    font-size: 0.88rem;
+    font-size: var(--fs-sm);
     margin-top: 0.3rem;
   }
 
@@ -210,7 +210,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
     padding: 0.6rem 1.5rem;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     font-weight: 600;
     border-radius: 6px;
     transition: background 0.2s;
@@ -228,6 +228,10 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
     padding: 1.2rem 0;
     border-bottom: 1px solid var(--line);
     transition: opacity 0.2s;
+  }
+
+  .post-item:last-child {
+    border-bottom: none;
   }
 
   .post-item.dragging {
@@ -249,7 +253,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
   .drag-handle {
     cursor: grab;
     color: var(--tertiary);
-    font-size: 1.1rem;
+    font-size: var(--fs-body);
     line-height: 1;
     padding: 0.2rem 0;
     user-select: none;
@@ -274,7 +278,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
 
   .post-cat {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.7rem;
+    font-size: var(--fs-xxs);
     color: var(--blue);
     font-weight: 500;
     letter-spacing: 1px;
@@ -283,19 +287,19 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
 
   .post-date {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
   }
 
   .post-chars {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    font-size: var(--fs-xxs);
     color: var(--tertiary);
   }
 
   .post-title {
     font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
+    font-size: var(--fs-h2);
     font-weight: 600;
     color: var(--white);
     margin-bottom: 0.6rem;
@@ -323,14 +327,14 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
     padding: 0.2rem 0.7rem;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.7rem;
+    font-size: var(--fs-xxs);
     font-weight: 600;
     border-radius: 3px;
   }
 
   .history-badge {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
   }
 
@@ -340,7 +344,7 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
     color: var(--tertiary);
     padding: 0.35rem 1rem;
     cursor: pointer;
-    font-size: 0.78rem;
+    font-size: var(--fs-xs);
     font-family: 'DM Sans', sans-serif;
     border-radius: 4px;
     text-decoration: none;
@@ -372,10 +376,6 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
       padding: 0 1.2rem;
     }
 
-    .admin-title {
-      font-size: 1.5rem;
-    }
-
     .admin-header {
       flex-direction: column;
       align-items: flex-start;
@@ -384,12 +384,10 @@ const visibleCount = allPosts.filter((p) => p.visible).length;
 
     .action-btn {
       padding: 0.25rem 0.6rem;
-      font-size: 0.7rem;
     }
 
     .publish-btn-sm {
       padding: 0.15rem 0.5rem;
-      font-size: 0.65rem;
     }
 
     .post-actions {

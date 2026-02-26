@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
 
 // If admin, redirect to home (they bypass maintenance)
 if (Astro.locals.isAdmin) {
@@ -9,7 +10,7 @@ if (Astro.locals.isAdmin) {
 
 <BaseLayout title="Maintenance — Gabriel Guillou">
   <div class="maintenance-page">
-    <div class="maintenance-icon">🔧</div>
+    <div class="maintenance-icon"><Icon name="wrench" size={48} /></div>
     <h1 class="maintenance-title">Maintenance en cours<span class="dot">.</span></h1>
     <p class="maintenance-text">
       Le site est temporairement indisponible pour maintenance. Revenez bientôt !
@@ -29,13 +30,13 @@ if (Astro.locals.isAdmin) {
   }
 
   .maintenance-icon {
-    font-size: 3rem;
+    font-size: var(--fs-display);
     margin-bottom: 1.5rem;
   }
 
   .maintenance-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.5rem;
+    font-size: var(--fs-h1);
     font-weight: 700;
     color: var(--white);
     margin-bottom: 1rem;
@@ -47,7 +48,7 @@ if (Astro.locals.isAdmin) {
 
   .maintenance-text {
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.05rem;
+    font-size: var(--fs-body-lg);
     color: var(--secondary);
     max-width: 480px;
     line-height: 1.8;
@@ -55,10 +56,6 @@ if (Astro.locals.isAdmin) {
 
   /* ─── Mobile ─── */
   @media (max-width: 768px) {
-    .maintenance-title {
-      font-size: 1.8rem;
-    }
-
     .maintenance-page {
       padding: 2rem 1.2rem 4rem;
     }

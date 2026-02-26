@@ -70,7 +70,7 @@ if (Astro.locals.isAdmin) {
 
   .login-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.5rem;
+    font-size: var(--fs-h1);
     font-weight: 700;
     color: var(--white);
     margin-bottom: 0.3rem;
@@ -82,7 +82,7 @@ if (Astro.locals.isAdmin) {
 
   .login-sub {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
     color: var(--tertiary);
     margin-bottom: 2.5rem;
   }
@@ -101,7 +101,7 @@ if (Astro.locals.isAdmin) {
     border-radius: 6px;
     color: var(--white);
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
     outline: none;
     transition: border-color 0.2s;
     box-sizing: border-box;
@@ -123,7 +123,7 @@ if (Astro.locals.isAdmin) {
     border-radius: 6px;
     color: #fff;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
@@ -135,7 +135,7 @@ if (Astro.locals.isAdmin) {
 
   .login-error {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: #ef4444;
     margin: 0;
   }
@@ -144,10 +144,6 @@ if (Astro.locals.isAdmin) {
   @media (max-width: 768px) {
     .login-page {
       padding: 2rem 1.2rem;
-    }
-
-    .login-title {
-      font-size: 2rem;
     }
   }
 </style>

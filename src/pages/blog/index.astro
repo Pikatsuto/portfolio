@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import SearchBar from "../../components/SearchBar";
 import { db } from "../../db";
 import { posts, categories } from "../../db/schema";
 import { eq } from "drizzle-orm";
@@ -29,31 +28,15 @@ const allPosts = isAdmin
   : await query.where(eq(posts.visible, true)).all();
 ---
 
-<BaseLayout title="Journal — Gabriel Guillou">
+<BaseLayout title="Articles — Gabriel Guillou">
   <div class="blog-list">
     <div class="blog-header">
-      <div>
-        <h1 class="blog-title">Journal<span class="dot">.</span></h1>
-        <p class="blog-subtitle">Notes techniques et retours d'expérience.</p>
-      </div>
-      <SearchBar
-        client:visible
-        posts={allPosts.map((p) => ({
-          id: p.id,
-          title: p.title,
-          excerpt: p.excerpt,
-          cat: p.cat,
-          visible: p.visible,
-        }))}
-      />
+      <h1 class="blog-title">Articles<span class="dot">.</span></h1>
+      <p class="blog-subtitle">Notes techniques et retours d'expérience.</p>
     </div>
 
-    <p id="no-results" class="no-results" style="display: none;">
-      Aucun article trouvé.
-    </p>
-
     {allPosts.map((p) => (
-      <article class:list={["blog-article", { hidden: !p.visible }]} data-post-id={p.id}>
+      <article class:list={["blog-article", { hidden: !p.visible }]}>
         <a href={`/blog/${p.id}`} class="article-link">
           <div class="article-meta">
             <span class="article-cat">{p.cat}</span>
@@ -63,7 +46,7 @@ const allPosts = isAdmin
           </div>
           <h2 class="article-title">{p.title}</h2>
           <p class="article-excerpt">{p.excerpt}</p>
-          <span class="article-time">{p.time} →</span>
+          <span class="article-time">{p.time}</span>
         </a>
       </article>
     ))}
@@ -72,7 +55,7 @@ const allPosts = isAdmin
 
 <style>
   .blog-list {
-    max-width: 1100px;
+    max-width: var(--content-max-width);
     width: 100%;
     margin: 0 auto;
     padding: 6rem 3rem 8rem;
@@ -87,7 +70,7 @@ const allPosts = isAdmin
 
   .blog-title {
     font-family: 'Playfair Display', serif;
-    font-size: 3rem;
+    font-size: var(--fs-display);
     font-weight: 700;
     margin-bottom: 0.5rem;
     color: var(--white);
@@ -100,19 +83,17 @@ const allPosts = isAdmin
   .blog-subtitle {
     font-family: 'DM Sans', sans-serif;
     color: var(--secondary);
-    font-size: 1rem;
-  }
-
-  .no-results {
-    font-family: 'DM Sans', sans-serif;
-    color: var(--tertiary);
-    font-size: 0.95rem;
+    font-size: var(--fs-body);
   }
 
   .blog-article {
     margin-bottom: 4rem;
     padding-bottom: 4rem;
     border-bottom: 1px solid var(--line);
+  }
+
+  .blog-article:last-child {
+    border-bottom: none;
   }
 
   .article-link {
@@ -130,7 +111,7 @@ const allPosts = isAdmin
 
   .article-cat {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.78rem;
+    font-size: var(--fs-xs);
     color: var(--blue);
     font-weight: 500;
     letter-spacing: 1px;
@@ -146,7 +127,7 @@ const allPosts = isAdmin
 
   .article-date {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--tertiary);
   }
 
@@ -160,7 +141,7 @@ const allPosts = isAdmin
 
   .hidden-badge {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.68rem;
+    font-size: var(--fs-xxs);
     color: var(--tertiary);
     border: 1px solid var(--line);
     padding: 0.1rem 0.5rem;
@@ -171,7 +152,7 @@ const allPosts = isAdmin
 
   .article-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2rem;
+    font-size: var(--fs-h2);
     font-weight: 700;
     margin-bottom: 0.8rem;
     color: var(--white);
@@ -186,13 +167,13 @@ const allPosts = isAdmin
   .article-excerpt {
     font-family: 'DM Sans', sans-serif;
     color: var(--secondary);
-    font-size: 1rem;
+    font-size: var(--fs-body);
     line-height: 1.8;
   }
 
   .article-time {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--tertiary);
     margin-top: 0.8rem;
     display: inline-block;
@@ -216,17 +197,10 @@ const allPosts = isAdmin
       gap: 1.5rem;
     }
 
-    .blog-title {
-      font-size: 2rem;
-    }
-
     .blog-article {
       margin-bottom: 2.5rem;
       padding-bottom: 2.5rem;
     }
 
-    .article-title {
-      font-size: 1.4rem;
-    }
   }
 </style>

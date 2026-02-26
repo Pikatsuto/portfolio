@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import DocSearch from "../../components/DocSearch";
 import { db } from "../../db";
 import { docs, sections, projects as projectsTable } from "../../db/schema";
 import { eq } from "drizzle-orm";
@@ -35,14 +34,10 @@ const projectsList = projectStats.filter((p) => p.firstId);
     <h1 class="docs-title">Documentation<span class="dot">.</span></h1>
     <p class="docs-subtitle">Sélectionnez un projet pour accéder à sa documentation.</p>
 
-    <div class="docs-search">
-      <DocSearch client:visible />
-    </div>
-
     <div class="project-grid">
       {projectsList.map((proj) => (
         <a href={`/docs/${proj.name}/${proj.firstId}`} class="project-card">
-          <h3 class="project-name">{proj.name}</h3>
+          <h2 class="project-name">{proj.name}</h2>
           <p class="project-info">{proj.count} pages · {proj.sectionCount} sections</p>
         </a>
       ))}
@@ -52,7 +47,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
 
 <style>
   .docs-selector {
-    max-width: 1100px;
+    max-width: var(--content-max-width);
     width: 100%;
     margin: 0 auto;
     padding: 6rem 3rem 8rem;
@@ -60,7 +55,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
 
   .docs-title {
     font-family: 'Playfair Display', serif;
-    font-size: 3rem;
+    font-size: var(--fs-display);
     font-weight: 700;
     margin-bottom: 0.5rem;
     color: var(--white);
@@ -73,13 +68,8 @@ const projectsList = projectStats.filter((p) => p.firstId);
   .docs-subtitle {
     font-family: 'DM Sans', sans-serif;
     color: var(--secondary);
-    font-size: 1rem;
+    font-size: var(--fs-body);
     margin-bottom: 3rem;
-  }
-
-  .docs-search {
-    max-width: 360px;
-    margin-bottom: 2.5rem;
   }
 
   .project-grid {
@@ -104,7 +94,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
 
   .project-name {
     font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
+    font-size: var(--fs-h2);
     font-weight: 600;
     color: var(--white);
     margin-bottom: 0.4rem;
@@ -112,7 +102,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
 
   .project-info {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     color: var(--tertiary);
   }
 
@@ -127,10 +117,6 @@ const projectsList = projectStats.filter((p) => p.firstId);
   @media (max-width: 768px) {
     .docs-selector {
       padding: 3rem 1.2rem 4rem;
-    }
-
-    .docs-title {
-      font-size: 2rem;
     }
 
     .project-grid {

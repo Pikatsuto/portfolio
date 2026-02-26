@@ -2,8 +2,8 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import AdminBar from "../../../components/AdminBar.astro";
 import EditButton from "../../../components/EditButton.astro";
+import Icon from "../../../components/Icon.astro";
 import MermaidInit from "../../../components/MermaidInit.astro";
-import DocSearch from "../../../components/DocSearch";
 import { db } from "../../../db";
 import { docs, sections, projects } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
@@ -75,21 +75,18 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
   <div class="docs-reader">
     <!-- Left sidebar -->
     <aside class="sidebar">
-      <a href="/docs" class="back-link">← Tous les projets</a>
-      <div class="sidebar-search">
-        <DocSearch client:visible />
-      </div>
-      <h3 class="sidebar-title">{project}</h3>
+      <a href="/docs" class="back-link"><Icon name="arrow-left" size={14} /> Tous les projets</a>
+      <div class="sidebar-title">{project}</div>
       {orderedSections.map((s) => (
         <div class="sidebar-section">
-          <h4 class="section-title">{s.title}</h4>
+          <div class="section-title">{s.title}</div>
           {s.items.map((item) => (
             <a
               href={`/docs/${project}/${item.id}`}
               class:list={["sidebar-item", { active: item.id === activeDoc.id, hidden: !item.visible }]}
             >
               {item.title}
-              {!item.visible && <span class="hidden-dot">●</span>}
+              {!item.visible && <span class="hidden-badge">masqué</span>}
             </a>
           ))}
         </div>
@@ -97,7 +94,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     </aside>
 
     <!-- Mobile sidebar toggle -->
-    <button class="sidebar-toggle" id="sidebar-toggle">☰ Navigation</button>
+    <button class="sidebar-toggle" id="sidebar-toggle"><Icon name="menu" size={16} /> Navigation</button>
 
     <!-- Sidebar overlay (mobile) -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -106,9 +103,9 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     <main class="doc-content">
       <div class="breadcrumb">
         <a href={`/docs/${project}`} class="bc-item bc-link">{project}</a>
-        <span class="bc-sep">›</span>
+        <Icon name="chevron-right" size={12} class="bc-sep" />
         <a href={`/docs/${project}/${sectionFirstDoc?.id ?? pageSlug}`} class="bc-item bc-link">{activeDoc.section}</a>
-        <span class="bc-sep">›</span>
+        <Icon name="chevron-right" size={12} class="bc-sep" />
         <span class="bc-item bc-active">{activeDoc.title}</span>
       </div>
       <h1 class="doc-title">{activeDoc.title}<span class="dot">.</span></h1>
@@ -123,7 +120,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
     <!-- Right TOC -->
     <aside class="toc-sidebar">
-      <h4 class="toc-title">Sur cette page</h4>
+      <div class="toc-title">Sur cette page</div>
       {toc.map((t, i) => (
         <a href={`#${t.slug}`} class:list={["toc-item", { active: i === 0 }]}>{t.text}</a>
       ))}
@@ -172,7 +169,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   /* ─── Left sidebar ─── */
   .sidebar {
-    padding: 1.5rem 1.2rem;
+    padding: 1.5rem 1.2rem 1.5rem 3rem;
     border-right: 1px solid var(--line);
     overflow-y: auto;
     display: flex;
@@ -183,9 +180,12 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     background: none;
     border: none;
     color: var(--tertiary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.78rem;
+    font-size: var(--fs-xs);
     margin-bottom: 1rem;
     text-align: left;
     padding: 0;
@@ -197,13 +197,9 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     color: var(--blue-hover);
   }
 
-  .sidebar-search {
-    margin-bottom: 1rem;
-  }
-
   .sidebar-title {
     font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
+    font-size: var(--fs-h3);
     font-weight: 600;
     color: var(--white);
     margin-bottom: 1rem;
@@ -215,7 +211,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .section-title {
     font-family: 'Playfair Display', serif;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     color: var(--white);
     margin-bottom: 0.5rem;
     font-weight: 600;
@@ -226,7 +222,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     padding: 0.3rem 0;
     padding-left: 0.8rem;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     font-family: 'DM Sans', sans-serif;
     color: var(--tertiary);
     font-weight: 400;
@@ -250,11 +246,16 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     font-style: italic;
   }
 
-  .hidden-dot {
-    font-size: 0.5rem;
+  .hidden-badge {
+    font-size: var(--fs-xxs);
     color: var(--tertiary);
+    border: 1px solid var(--line);
+    padding: 0 0.4rem;
+    border-radius: 3px;
     margin-left: 0.3rem;
     vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   /* ─── Main content ─── */
@@ -265,10 +266,11 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .breadcrumb {
     display: flex;
+    align-items: center;
     gap: 0.3rem;
     margin-bottom: 2.5rem;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
   }
 
   .bc-item {
@@ -295,7 +297,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .doc-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.5rem;
+    font-size: var(--fs-h1);
     font-weight: 700;
     margin-bottom: 2rem;
     color: var(--white);
@@ -314,7 +316,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .toc-title {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.7rem;
+    font-size: var(--fs-xxs);
     color: var(--tertiary);
     letter-spacing: 1.5px;
     margin-bottom: 1rem;
@@ -324,7 +326,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .toc-item {
     display: block;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     color: var(--tertiary);
     margin-bottom: 0.6rem;
     cursor: pointer;
@@ -346,7 +348,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   /* md-body styles are in global.css — only override font-size for docs */
   .md-body {
-    font-size: 0.95rem;
+    font-size: var(--fs-body);
   }
 
   /* ─── Sidebar toggle (hidden by default) ─── */
@@ -356,9 +358,11 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     border: 1px solid var(--line);
     color: var(--tertiary);
     padding: 0.5rem 1rem;
+    align-items: center;
+    gap: 0.4rem;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     border-radius: 6px;
     margin: 1rem 1.2rem 0;
     transition: color 0.2s, border-color 0.2s;
@@ -388,6 +392,10 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
   @media (max-width: 1024px) {
     .docs-reader {
       grid-template-columns: 220px 1fr;
+    }
+
+    .sidebar {
+      padding-left: 1.5rem;
     }
 
     .toc-sidebar {
@@ -425,7 +433,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     }
 
     .sidebar-toggle {
-      display: block;
+      display: flex;
     }
 
     .doc-content {

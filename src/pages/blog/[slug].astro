@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import AdminBar from "../../components/AdminBar.astro";
 import EditButton from "../../components/EditButton.astro";
+import Icon from "../../components/Icon.astro";
 import MermaidInit from "../../components/MermaidInit.astro";
 import { db } from "../../db";
 import { posts, categories, projects } from "../../db/schema";
@@ -40,7 +41,7 @@ const toc = extractTOC(displayContent);
 
 <BaseLayout title={`${post.title} — Gabriel Guillou`}>
   <div class="article-page">
-    <a href="/blog" class="back-btn">← Retour</a>
+    <a href="/blog" class="back-btn"><Icon name="arrow-left" size={14} /> Retour</a>
 
     <div class="article-header">
       <div class="article-meta">
@@ -52,14 +53,14 @@ const toc = extractTOC(displayContent);
       <p class="article-excerpt">{post.excerpt}</p>
       {post.docProject && (
         <a href={`/docs/${post.docProject}`} class="doc-link-btn">
-          Documentation {post.docProject} →
+          Documentation {post.docProject} <Icon name="arrow-right" size={14} />
         </a>
       )}
     </div>
 
     {toc.length > 0 && (
       <div class="toc">
-        <h4 class="toc-title">Sommaire</h4>
+        <div class="toc-title">Sommaire</div>
         {toc.map((t) => (
           <a href={`#${t.slug}`} class="toc-item">{t.text}</a>
         ))}
@@ -80,7 +81,7 @@ const toc = extractTOC(displayContent);
 
 <style>
   .article-page {
-    max-width: 1100px;
+    max-width: var(--content-max-width);
     width: 100%;
     margin: 0 auto;
     padding: 4rem 3rem 8rem;
@@ -92,9 +93,11 @@ const toc = extractTOC(displayContent);
     color: var(--tertiary);
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
+    font-size: var(--fs-sm);
     margin-bottom: 2rem;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     text-decoration: none;
     transition: color 0.2s;
   }
@@ -116,7 +119,7 @@ const toc = extractTOC(displayContent);
 
   .article-cat {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.78rem;
+    font-size: var(--fs-xs);
     color: var(--blue);
     font-weight: 500;
     letter-spacing: 1px;
@@ -132,13 +135,13 @@ const toc = extractTOC(displayContent);
 
   .article-info {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: var(--fs-sm);
     color: var(--tertiary);
   }
 
   .article-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.8rem;
+    font-size: var(--fs-display);
     font-weight: 700;
     line-height: 1.2;
     color: var(--white);
@@ -148,20 +151,22 @@ const toc = extractTOC(displayContent);
   .article-excerpt {
     font-family: 'DM Sans', sans-serif;
     color: var(--secondary);
-    font-size: 1.1rem;
+    font-size: var(--fs-body-lg);
     line-height: 1.8;
     font-style: italic;
   }
 
   .doc-link-btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     margin-top: 1rem;
     background: color-mix(in srgb, var(--blue) 3%, transparent);
     border: 1px solid color-mix(in srgb, var(--blue) 15%, transparent);
     color: var(--blue-hover);
     padding: 0.4rem 1rem;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     font-family: 'DM Sans', sans-serif;
     border-radius: 5px;
     font-weight: 500;
@@ -184,7 +189,7 @@ const toc = extractTOC(displayContent);
 
   .toc-title {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.72rem;
+    font-size: var(--fs-xxs);
     color: var(--tertiary);
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -195,7 +200,7 @@ const toc = extractTOC(displayContent);
   .toc-item {
     display: block;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem;
+    font-size: var(--fs-sm);
     color: var(--blue-hover);
     margin-bottom: 0.3rem;
     cursor: pointer;
@@ -222,8 +227,5 @@ const toc = extractTOC(displayContent);
       padding: 2rem 1.2rem 4rem;
     }
 
-    .article-title {
-      font-size: 1.8rem;
-    }
   }
 </style>
