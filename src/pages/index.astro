@@ -1,0 +1,27 @@
+---
+import { db } from "../db";
+import { portfolio, posts, docs, settings } from "../db/schema";
+import { count } from "drizzle-orm";
+
+const portfolioRow = await db.select().from(portfolio).get();
+const postCount = await db.select({ n: count() }).from(posts).get();
+const docCount = await db.select({ n: count() }).from(docs).get();
+const maintenanceRow = await db.select().from(settings).get();
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Gabriel — Portfolio</title>
+  </head>
+  <body>
+    <h1>Phase 1 OK</h1>
+    <ul>
+      <li>Portfolio: {portfolioRow ? "loaded" : "missing"}</li>
+      <li>Posts: {postCount?.n ?? 0}</li>
+      <li>Docs: {docCount?.n ?? 0}</li>
+      <li>Maintenance: {maintenanceRow?.value ?? "N/A"}</li>
+    </ul>
+  </body>
+</html>

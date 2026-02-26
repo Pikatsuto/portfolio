@@ -1,0 +1,631 @@
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { mkdirSync } from "fs";
+import * as schema from "./schema";
+
+// Ensure data directory exists
+mkdirSync("data", { recursive: true });
+
+const sqlite = new Database("data/portfolio.db");
+sqlite.pragma("journal_mode = WAL");
+sqlite.pragma("foreign_keys = ON");
+const db = drizzle(sqlite, { schema });
+
+const now = new Date().toISOString();
+
+// ─── Portfolio MDX (canonical from JSX prototype) ───
+
+const defaultPortfolioMDX = `---
+name: Gabriel Guillou
+title: Gabriel Guillou
+role: SysAdmin / DevOps / Full-Stack
+headline: "Construire, *automatiser*, déployer."
+bio: "Je crée des infrastructures self-hosted et des outils que j'utilise au quotidien. Chaque projet résout un vrai problème."
+
+skills:
+  - name: Linux
+    details: Debian · Ubuntu · Arch
+  - name: Containers
+    details: Docker · Proxmox · LXC
+  - name: Dev
+    details: Vue.js · React · Python · Bash
+  - name: Infra
+    details: Nginx · CI/CD · ZFS
+
+projects:
+  - title: UniDash
+    description: Orchestration cloud self-hosted avec monitoring intégré et interface de gestion complète
+    tags: [Docker, Vue.js, Python]
+    docs: UniDash
+  - title: AstralEmu
+    description: Distribution Linux complète dédiée à l'émulation retro gaming avec builders dynamiques
+    tags: [Linux, Bash, CI/CD]
+    docs: AstralEmu
+  - title: Centrarr
+    description: Serveur média avec authentification WebAuthn passkeys et gestion multi-utilisateurs
+    tags: [Auth, Node.js, SQLite]
+    blog: webauthn-node
+    docs: Centrarr
+  - title: IsolApp
+    description: Système d'orchestration Docker en environnements chroot isolés haute performance
+    tags: [Docker, Nginx, Bash]
+    blog: docker-compose-quit
+    docs: IsolApp
+
+stats:
+  - value: 5+
+    label: Années XP
+  - value: 20+
+    label: Projets
+  - value: 99.9%
+    label: Uptime
+  - value: ∞
+    label: Café
+---
+
+## À propos
+
+Passionné d'infrastructure et d'automatisation depuis plus de 5 ans, je conçois des systèmes **fiables** et **performants**. Mon approche : comprendre le *pourquoi* avant le *comment*, et ne jamais déployer ce que je ne comprends pas.
+
+## Philosophie
+
+\`\`\`
+Si c'est manuel, c'est automatisable.
+Si c'est automatisé, c'est documentable.
+Si c'est documenté, c'est maintenable.
+\`\`\`
+
+## Contact
+
+Disponible pour des missions freelance en **DevOps**, **administration système**, ou **développement full-stack**.`;
+
+// ─── Blog posts (canonical from JSX prototype) ───
+
+const defaultPosts = [
+  {
+    id: "docker-compose-quit",
+    title: "Pourquoi j'ai quitté Docker Compose",
+    date: "15 Décembre 2025",
+    cat: "DevOps",
+    time: "8 min de lecture",
+    visible: true,
+    docProject: "IsolApp",
+    draft: null,
+    excerpt:
+      "Après 3 ans d'utilisation intensive, voici pourquoi j'ai développé ma propre solution d'orchestration conteneurisée.",
+    content: `Docker Compose m'a accompagné pendant 3 ans. Chaque projet passait par un \`docker-compose.yml\`. Jusqu'au jour où ça n'a plus suffi.
+
+## Le point de rupture
+
+Tout a commencé quand j'ai voulu déployer une quinzaine de services sur un même serveur, chacun avec son propre réseau isolé. Le fichier Compose est devenu un monstre de 800 lignes. Le vrai problème n'était pas la taille — c'était le **manque de contrôle**.
+
+- Du routing réseau fin entre conteneurs isolés
+- Des healthchecks personnalisés avec retry logic
+- Du hot-reload de configuration sans restart
+- De la gestion de secrets qui ne soit pas du bind mount en clair
+
+## La solution : IsolApp
+
+\`\`\`bash
+isolapp deploy --name grafana \\
+  --image grafana/grafana:latest \\
+  --network isolated \\
+  --port 3000:3000 \\
+  --healthcheck "curl -f http://localhost:3000/api/health"
+\`\`\`
+
+Chaque commande correspond à un appel système réel. Pas d'abstraction, pas de magie.
+
+## Les résultats après 6 mois
+
+- **Temps de déploiement** : -40% en moyenne
+- **Debugging** : direct et précis via syscalls
+- **Ressources** : contrôle granulaire via cgroups v2
+- **Fiabilité** : 99.97% d'uptime
+
+## Recommandation
+
+**Non**, ne quittez pas Compose si vous avez moins de 10 services. Mais si vous gérez un homelab complexe et avez une allergie aux boîtes noires : écrire votre propre solution paie.`,
+    history: [
+      {
+        date: "15 Déc 2025 10:30",
+        summary: "Publication initiale",
+        content: "...",
+      },
+    ],
+  },
+  {
+    id: "zfs-proxmox",
+    title: "ZFS sur Proxmox : le guide complet",
+    date: "28 Novembre 2025",
+    cat: "Sysadmin",
+    time: "12 min",
+    visible: true,
+    docProject: null,
+    draft: null,
+    excerpt:
+      "Configuration, snapshots, réplication — tout pour un storage solide.",
+    content: "Article complet à venir...",
+    history: [],
+  },
+  {
+    id: "webauthn-node",
+    title: "WebAuthn dans Node.js",
+    date: "10 Novembre 2025",
+    cat: "Dev",
+    time: "10 min",
+    visible: true,
+    docProject: "Centrarr",
+    draft: null,
+    excerpt: "Implémentation passkeys de A à Z.",
+    content: "Article complet à venir...",
+    history: [],
+  },
+];
+
+// ─── Docs pages (canonical from JSX prototype) ───
+
+const defaultDocs = [
+  // UniDash docs
+  {
+    id: "ud-installation",
+    project: "UniDash",
+    section: "Démarrage",
+    title: "Installation",
+    visible: true,
+    draft: null,
+    history: [{ date: "01 Nov 2025 14:00", summary: "Création" }],
+    content: `Assurez-vous d'avoir installé :
+
+- **Docker** version 24+
+- **Node.js** 20 LTS
+- **Git**
+
+## Installation rapide
+
+\`\`\`bash
+git clone https://github.com/gabmusic/unidash.git
+cd unidash && ./install.sh --production
+\`\`\`
+
+## Configuration
+
+\`\`\`env
+APP_PORT=3000
+DB_PATH=./data/app.db
+JWT_SECRET=your-secret-here
+\`\`\`
+
+## Vérification
+
+\`\`\`bash
+curl http://localhost:3000/api/health
+\`\`\``,
+  },
+  {
+    id: "ud-configuration",
+    project: "UniDash",
+    section: "Démarrage",
+    title: "Configuration",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de configuration détaillé à venir...",
+  },
+  {
+    id: "ud-deploiement",
+    project: "UniDash",
+    section: "Démarrage",
+    title: "Déploiement",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de déploiement à venir...",
+  },
+  {
+    id: "ud-vue-ensemble",
+    project: "UniDash",
+    section: "Architecture",
+    title: "Vue d'ensemble",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Architecture générale de UniDash à venir...",
+  },
+  {
+    id: "ud-services",
+    project: "UniDash",
+    section: "Architecture",
+    title: "Services",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Description des services à venir...",
+  },
+  {
+    id: "ud-base-de-donnees",
+    project: "UniDash",
+    section: "Architecture",
+    title: "Base de données",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Schéma de la base de données à venir...",
+  },
+  {
+    id: "ud-authentification",
+    project: "UniDash",
+    section: "API Reference",
+    title: "Authentification",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Documentation de l'authentification API à venir...",
+  },
+  {
+    id: "ud-endpoints",
+    project: "UniDash",
+    section: "API Reference",
+    title: "Endpoints",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Liste des endpoints API à venir...",
+  },
+  {
+    id: "ud-webhooks",
+    project: "UniDash",
+    section: "API Reference",
+    title: "Webhooks",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Documentation des webhooks à venir...",
+  },
+  {
+    id: "ud-migration",
+    project: "UniDash",
+    section: "Guides avancés",
+    title: "Migration",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de migration à venir...",
+  },
+  {
+    id: "ud-backup",
+    project: "UniDash",
+    section: "Guides avancés",
+    title: "Backup",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de backup à venir...",
+  },
+  {
+    id: "ud-monitoring",
+    project: "UniDash",
+    section: "Guides avancés",
+    title: "Monitoring",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de monitoring à venir...",
+  },
+  // AstralEmu docs
+  {
+    id: "ae-installation",
+    project: "AstralEmu",
+    section: "Démarrage",
+    title: "Installation",
+    visible: true,
+    draft: null,
+    history: [],
+    content: `## Prérequis
+
+- Un système Linux 64-bit
+- 4Go de RAM minimum
+- 20Go d'espace disque
+
+## Installation
+
+\`\`\`bash
+curl -fsSL https://astralemu.dev/install.sh | bash
+\`\`\`
+
+## Premier lancement
+
+\`\`\`bash
+astralemu --init
+astralemu start
+\`\`\``,
+  },
+  {
+    id: "ae-roms",
+    project: "AstralEmu",
+    section: "Démarrage",
+    title: "Gestion des ROMs",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de gestion des ROMs à venir...",
+  },
+  {
+    id: "ae-builders",
+    project: "AstralEmu",
+    section: "Architecture",
+    title: "Builders dynamiques",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Documentation des builders dynamiques à venir...",
+  },
+  {
+    id: "ae-themes",
+    project: "AstralEmu",
+    section: "Personnalisation",
+    title: "Thèmes EmulationStation",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide de personnalisation des thèmes à venir...",
+  },
+  // Centrarr docs
+  {
+    id: "ct-installation",
+    project: "Centrarr",
+    section: "Démarrage",
+    title: "Installation",
+    visible: true,
+    draft: null,
+    history: [],
+    content: `## Installation rapide
+
+\`\`\`bash
+npm install -g centrarr
+centrarr init
+\`\`\`
+
+## Configuration WebAuthn
+
+La configuration des passkeys se fait dans \`config.json\`.
+
+\`\`\`env
+WEBAUTHN_RP_NAME=Centrarr
+WEBAUTHN_RP_ID=media.example.com
+\`\`\``,
+  },
+  {
+    id: "ct-webauthn",
+    project: "Centrarr",
+    section: "Authentification",
+    title: "WebAuthn Passkeys",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Guide complet WebAuthn à venir...",
+  },
+  {
+    id: "ct-users",
+    project: "Centrarr",
+    section: "Authentification",
+    title: "Gestion utilisateurs",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Gestion des utilisateurs et sous-comptes à venir...",
+  },
+  // IsolApp docs
+  {
+    id: "ia-installation",
+    project: "IsolApp",
+    section: "Démarrage",
+    title: "Installation",
+    visible: true,
+    draft: null,
+    history: [],
+    content: `## Prérequis
+
+- Docker 24+
+- Nginx
+- Linux avec support chroot
+
+## Installation
+
+\`\`\`bash
+git clone https://github.com/gabmusic/isolapp.git
+cd isolapp && make install
+\`\`\``,
+  },
+  {
+    id: "ia-chroot",
+    project: "IsolApp",
+    section: "Architecture",
+    title: "Environnements chroot",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Documentation des environnements chroot isolés à venir...",
+  },
+  {
+    id: "ia-networking",
+    project: "IsolApp",
+    section: "Architecture",
+    title: "Réseau isolé",
+    visible: true,
+    draft: null,
+    history: [],
+    content: "Documentation du networking inter-conteneurs à venir...",
+  },
+];
+
+// ─── Seed execution ───
+
+console.log("Seeding database...");
+
+// Create tables via Drizzle push (simpler for seed)
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS posts (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    cat TEXT NOT NULL,
+    time TEXT NOT NULL,
+    excerpt TEXT NOT NULL,
+    content TEXT NOT NULL,
+    draft TEXT,
+    visible INTEGER NOT NULL DEFAULT 0,
+    doc_project TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS post_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS docs (
+    id TEXT PRIMARY KEY,
+    project TEXT NOT NULL,
+    section TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    draft TEXT,
+    visible INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS doc_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_id TEXT NOT NULL REFERENCES docs(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS portfolio (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    content TEXT NOT NULL,
+    draft TEXT,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS portfolio_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+`);
+
+// Clear existing data
+sqlite.exec(`
+  DELETE FROM post_history;
+  DELETE FROM doc_history;
+  DELETE FROM portfolio_history;
+  DELETE FROM posts;
+  DELETE FROM docs;
+  DELETE FROM portfolio;
+  DELETE FROM settings;
+`);
+
+// Insert portfolio
+db.insert(schema.portfolio)
+  .values({
+    id: 1,
+    content: defaultPortfolioMDX,
+    draft: null,
+    updatedAt: now,
+  })
+  .run();
+console.log("  Portfolio: 1 row");
+
+// Insert posts
+for (const post of defaultPosts) {
+  db.insert(schema.posts)
+    .values({
+      id: post.id,
+      title: post.title,
+      date: post.date,
+      cat: post.cat,
+      time: post.time,
+      excerpt: post.excerpt,
+      content: post.content,
+      draft: post.draft,
+      visible: post.visible,
+      docProject: post.docProject,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+
+  for (const h of post.history) {
+    db.insert(schema.postHistory)
+      .values({
+        postId: post.id,
+        date: h.date,
+        summary: h.summary,
+        content: h.content,
+        createdAt: now,
+      })
+      .run();
+  }
+}
+console.log(`  Posts: ${defaultPosts.length} rows`);
+
+// Insert docs
+for (let i = 0; i < defaultDocs.length; i++) {
+  const doc = defaultDocs[i];
+  db.insert(schema.docs)
+    .values({
+      id: doc.id,
+      project: doc.project,
+      section: doc.section,
+      title: doc.title,
+      content: doc.content,
+      draft: doc.draft,
+      visible: doc.visible,
+      sortOrder: i,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+
+  if (doc.history) {
+    for (const h of doc.history) {
+      db.insert(schema.docHistory)
+        .values({
+          docId: doc.id,
+          date: h.date,
+          summary: h.summary,
+          content: h.content ?? "...",
+          createdAt: now,
+        })
+        .run();
+    }
+  }
+}
+console.log(`  Docs: ${defaultDocs.length} rows`);
+
+// Insert settings
+db.insert(schema.settings)
+  .values({ key: "maintenance", value: "false" })
+  .run();
+console.log("  Settings: 1 row");
+
+console.log("Seed complete!");
+sqlite.close();
