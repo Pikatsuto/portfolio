@@ -52,6 +52,14 @@ function escapeHtml(str: string): string {
     .replace(/>/g, "&gt;");
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/<[^>]*>/g, "")
+    .replace(/[^a-z0-9àâéèêëïîôùûüÿçœæ]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 // ─── Render markdown to HTML ───
 
 export async function renderMarkdown(md: string): Promise<string> {
@@ -60,9 +68,10 @@ export async function renderMarkdown(md: string): Promise<string> {
   const marked = new Marked({
     renderer: {
       heading({ text, depth }) {
-        if (depth === 2) return `<h2 class="md-h2">${text}</h2>`;
-        if (depth === 3) return `<h3 class="md-h3">${text}</h3>`;
-        return `<h${depth}>${text}</h${depth}>`;
+        const id = slugify(text);
+        if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}</h2>`;
+        if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}</h3>`;
+        return `<h${depth} id="${id}">${text}</h${depth}>`;
       },
       code({ text, lang }) {
         // No language or unsupported → plain text with our theme color
@@ -97,10 +106,18 @@ export async function renderMarkdown(md: string): Promise<string> {
 
 // ─── Extract TOC headings ───
 
-export function extractTOC(md: string): string[] {
+export interface TOCEntry {
+  text: string;
+  slug: string;
+}
+
+export function extractTOC(md: string): TOCEntry[] {
   if (!md) return [];
   return md
     .split("\n")
     .filter((l) => l.startsWith("## "))
-    .map((l) => l.slice(3));
+    .map((l) => {
+      const text = l.slice(3);
+      return { text, slug: slugify(text) };
+    });
 }

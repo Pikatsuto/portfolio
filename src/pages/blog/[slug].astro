@@ -39,7 +39,7 @@ const toc = extractTOC(post.content);
       <div class="toc">
         <h4 class="toc-title">Sommaire</h4>
         {toc.map((t) => (
-          <div class="toc-item">{t}</div>
+          <a href={`#${t.slug}`} class="toc-item">{t.text}</a>
         ))}
       </div>
     )}
@@ -163,11 +163,18 @@ const toc = extractTOC(post.content);
   }
 
   .toc-item {
+    display: block;
     font-family: 'DM Sans', sans-serif;
     font-size: 0.88rem;
     color: var(--blue-hover);
     margin-bottom: 0.3rem;
     cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .toc-item:hover {
+    text-decoration: underline;
   }
 
   /* ─── MDX Body (same as portfolio) ─── */

@@ -1,0 +1,351 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { db } from "../../../db";
+import { docs } from "../../../db/schema";
+import { DOC_SECTIONS_ORDER } from "../../../db/schema";
+import { eq, and } from "drizzle-orm";
+import { renderMarkdown, extractTOC } from "../../../lib/markdown";
+
+const { project, page: pageSlug } = Astro.params;
+
+// All visible docs for this project
+const projectDocs = await db
+  .select()
+  .from(docs)
+  .where(and(eq(docs.project, project!), eq(docs.visible, true)))
+  .all();
+
+if (projectDocs.length === 0) {
+  return Astro.redirect("/docs");
+}
+
+// Active doc
+const activeDoc = projectDocs.find((d) => d.id === pageSlug);
+if (!activeDoc) {
+  return Astro.redirect(`/docs/${project}/${projectDocs[0].id}`);
+}
+
+// Build sections (ordered by DOC_SECTIONS_ORDER)
+const sectionMap = new Map<string, typeof projectDocs>();
+for (const d of projectDocs) {
+  const items = sectionMap.get(d.section) || [];
+  items.push(d);
+  sectionMap.set(d.section, items);
+}
+
+const orderedSections: Array<{ title: string; items: typeof projectDocs }> = [];
+for (const title of DOC_SECTIONS_ORDER) {
+  const items = sectionMap.get(title);
+  if (items && items.length > 0) {
+    orderedSections.push({ title, items });
+    sectionMap.delete(title);
+  }
+}
+// Remaining sections not in the predefined order
+for (const [title, items] of sectionMap) {
+  orderedSections.push({ title, items });
+}
+
+const contentHtml = await renderMarkdown(activeDoc.content);
+const toc = extractTOC(activeDoc.content);
+
+// First doc in the active section (for breadcrumb link)
+const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section);
+---
+
+<BaseLayout title={`${activeDoc.title} — ${project} Docs`} fullHeight>
+  <div class="docs-reader">
+    <!-- Left sidebar -->
+    <aside class="sidebar">
+      <a href="/docs" class="back-link">← Tous les projets</a>
+      <h3 class="sidebar-title">{project}</h3>
+      {orderedSections.map((s) => (
+        <div class="sidebar-section">
+          <h4 class="section-title">{s.title}</h4>
+          {s.items.map((item) => (
+            <a
+              href={`/docs/${project}/${item.id}`}
+              class:list={["sidebar-item", { active: item.id === activeDoc.id }]}
+            >
+              {item.title}
+            </a>
+          ))}
+        </div>
+      ))}
+    </aside>
+
+    <!-- Main content -->
+    <main class="doc-content">
+      <div class="breadcrumb">
+        <a href={`/docs/${project}`} class="bc-item bc-link">{project}</a>
+        <span class="bc-sep">›</span>
+        <a href={`/docs/${project}/${sectionFirstDoc?.id ?? pageSlug}`} class="bc-item bc-link">{activeDoc.section}</a>
+        <span class="bc-sep">›</span>
+        <span class="bc-item bc-active">{activeDoc.title}</span>
+      </div>
+      <h1 class="doc-title">{activeDoc.title}<span class="dot">.</span></h1>
+      <div class="md-body" set:html={contentHtml} />
+    </main>
+
+    <!-- Right TOC -->
+    <aside class="toc-sidebar">
+      <h4 class="toc-title">Sur cette page</h4>
+      {toc.map((t, i) => (
+        <a href={`#${t.slug}`} class:list={["toc-item", { active: i === 0 }]}>{t.text}</a>
+      ))}
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .docs-reader {
+    display: grid;
+    grid-template-columns: 250px 1fr 170px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ─── Left sidebar ─── */
+  .sidebar {
+    padding: 1.5rem 1.2rem;
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .back-link {
+    background: none;
+    border: none;
+    color: var(--tertiary);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    margin-bottom: 1rem;
+    text-align: left;
+    padding: 0;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover {
+    color: var(--blue-hover);
+  }
+
+  .sidebar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .sidebar-item {
+    display: block;
+    padding: 0.3rem 0;
+    padding-left: 0.8rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-weight: 400;
+    border-left: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    text-decoration: none;
+  }
+
+  .sidebar-item:hover {
+    color: var(--blue-hover);
+  }
+
+  .sidebar-item.active {
+    color: var(--blue-hover);
+    font-weight: 500;
+    border-left-color: var(--blue);
+  }
+
+  /* ─── Main content ─── */
+  .doc-content {
+    padding: 3rem 3.5rem 6rem;
+    overflow-y: auto;
+  }
+
+  .breadcrumb {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+  }
+
+  .bc-item {
+    color: var(--tertiary);
+  }
+
+  .bc-link {
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .bc-link:hover {
+    color: var(--blue-hover);
+  }
+
+  .bc-active {
+    color: var(--blue-hover);
+  }
+
+  .bc-sep {
+    color: var(--line);
+    margin: 0 0.4rem;
+  }
+
+  .doc-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--white);
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  /* ─── Right TOC ─── */
+  .toc-sidebar {
+    border-left: 1px solid var(--line);
+    padding: 3rem 1.2rem;
+    overflow-y: auto;
+  }
+
+  .toc-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    color: var(--tertiary);
+    letter-spacing: 1.5px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .toc-item {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--tertiary);
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    padding-left: 0.8rem;
+    border-left: 1px solid transparent;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .toc-item:hover {
+    color: var(--blue-hover);
+  }
+
+  .toc-item.active {
+    color: var(--blue-hover);
+    border-left-color: var(--blue);
+  }
+
+  /* ─── MDX Body ─── */
+  .md-body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--body);
+    line-height: 1.9;
+    font-size: 0.95rem;
+  }
+
+  .md-body :global(.md-h2) {
+    font-family: 'Playfair Display', serif;
+    color: var(--white);
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .md-body :global(.md-h3) {
+    font-family: 'Playfair Display', serif;
+    color: var(--white);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2rem 0 0.8rem;
+  }
+
+  .md-body :global(p) {
+    margin-bottom: 0.8rem;
+    line-height: 1.9;
+  }
+
+  .md-body :global(ul) {
+    padding-left: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .md-body :global(li) {
+    margin-bottom: 0.4rem;
+    color: var(--body);
+    line-height: 1.8;
+  }
+
+  .md-body :global(strong) {
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  .md-body :global(.md-inline-code) {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--blue-hover);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .md-body :global(.md-code) {
+    margin: 1.2rem 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .md-body :global(.md-code pre) {
+    background: var(--code-bg) !important;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--blue);
+    padding: 1rem 1.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.84rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+
+  .md-body :global(.md-code-plain) {
+    color: var(--blue-hover);
+  }
+
+  .md-body :global(.shiki span) {
+    color: var(--s-dark) !important;
+  }
+
+  :root[data-theme="light"] .md-body :global(.shiki span) {
+    color: var(--s-light) !important;
+  }
+</style>
