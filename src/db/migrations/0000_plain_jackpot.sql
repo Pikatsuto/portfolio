@@ -1,3 +1,11 @@
+CREATE TABLE `categories` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `categories_name_unique` ON `categories` (`name`);--> statement-breakpoint
 CREATE TABLE `doc_history` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`doc_id` text NOT NULL,
@@ -10,15 +18,15 @@ CREATE TABLE `doc_history` (
 --> statement-breakpoint
 CREATE TABLE `docs` (
 	`id` text PRIMARY KEY NOT NULL,
-	`project` text NOT NULL,
-	`section` text NOT NULL,
+	`section_id` integer NOT NULL,
 	`title` text NOT NULL,
 	`content` text NOT NULL,
 	`draft` text,
 	`visible` integer DEFAULT false NOT NULL,
 	`sort_order` integer DEFAULT 0 NOT NULL,
 	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`section_id`) REFERENCES `sections`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `portfolio` (
@@ -50,18 +58,41 @@ CREATE TABLE `posts` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
 	`date` text NOT NULL,
-	`cat` text NOT NULL,
+	`category_id` integer NOT NULL,
 	`time` text NOT NULL,
 	`excerpt` text NOT NULL,
 	`content` text NOT NULL,
 	`draft` text,
 	`visible` integer DEFAULT false NOT NULL,
 	`sort_order` integer DEFAULT 0 NOT NULL,
-	`doc_project` text,
+	`doc_project_id` integer,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`doc_project_id`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE TABLE `projects` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`description` text,
+	`visible` integer DEFAULT true NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `projects_name_unique` ON `projects` (`name`);--> statement-breakpoint
+CREATE TABLE `sections` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`project_id` integer NOT NULL,
+	`name` text NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text NOT NULL,
+	FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `sections_project_name_idx` ON `sections` (`project_id`,`name`);--> statement-breakpoint
 CREATE TABLE `settings` (
 	`key` text PRIMARY KEY NOT NULL,
 	`value` text NOT NULL

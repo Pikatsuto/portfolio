@@ -482,24 +482,59 @@ cd isolapp && make install
   },
 ];
 
+// ─── Section order per project (canonical) ───
+
+const sectionOrders: Record<string, string[]> = {
+  UniDash: ["Démarrage", "Architecture", "API Reference", "Guides avancés"],
+  AstralEmu: ["Démarrage", "Architecture", "Personnalisation"],
+  Centrarr: ["Démarrage", "Authentification"],
+  IsolApp: ["Démarrage", "Architecture"],
+};
+
 // ─── Seed execution ───
 
 console.log("Seeding database...");
 
-// Create tables via Drizzle push (simpler for seed)
+// Create tables via raw SQL
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    visible INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS sections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    UNIQUE(project_id, name)
+  );
+
   CREATE TABLE IF NOT EXISTS posts (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     date TEXT NOT NULL,
-    cat TEXT NOT NULL,
+    category_id INTEGER NOT NULL REFERENCES categories(id),
     time TEXT NOT NULL,
     excerpt TEXT NOT NULL,
     content TEXT NOT NULL,
     draft TEXT,
     visible INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
-    doc_project TEXT,
+    doc_project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
@@ -515,8 +550,7 @@ sqlite.exec(`
 
   CREATE TABLE IF NOT EXISTS docs (
     id TEXT PRIMARY KEY,
-    project TEXT NOT NULL,
-    section TEXT NOT NULL,
+    section_id INTEGER NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     draft TEXT,
@@ -561,8 +595,11 @@ sqlite.exec(`
   DELETE FROM post_history;
   DELETE FROM doc_history;
   DELETE FROM portfolio_history;
-  DELETE FROM posts;
   DELETE FROM docs;
+  DELETE FROM posts;
+  DELETE FROM sections;
+  DELETE FROM categories;
+  DELETE FROM projects;
   DELETE FROM portfolio;
   DELETE FROM settings;
 `);
@@ -578,21 +615,83 @@ db.insert(schema.portfolio)
   .run();
 console.log("  Portfolio: 1 row");
 
+// Insert categories (deduplicate from posts)
+const catNames = [...new Set(defaultPosts.map((p) => p.cat))];
+for (let i = 0; i < catNames.length; i++) {
+  db.insert(schema.categories)
+    .values({ name: catNames[i], sortOrder: i, createdAt: now })
+    .run();
+}
+console.log(`  Categories: ${catNames.length} rows`);
+
+// Build category lookup
+const categoryRows = db.select().from(schema.categories).all();
+const catIdMap = new Map(categoryRows.map((c) => [c.name, c.id]));
+
+// Insert projects (deduplicate from docs + posts.docProject)
+const projectNames = [...new Set(defaultDocs.map((d) => d.project))];
+for (let i = 0; i < projectNames.length; i++) {
+  db.insert(schema.projects)
+    .values({
+      name: projectNames[i],
+      visible: true,
+      sortOrder: i,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+}
+console.log(`  Projects: ${projectNames.length} rows`);
+
+// Build project lookup
+const projectRows = db.select().from(schema.projects).all();
+const projIdMap = new Map(projectRows.map((p) => [p.name, p.id]));
+
+// Insert sections with order from sectionOrders
+let sectionCount = 0;
+for (const [projName, sectionNames] of Object.entries(sectionOrders)) {
+  const projId = projIdMap.get(projName)!;
+  for (let i = 0; i < sectionNames.length; i++) {
+    db.insert(schema.sections)
+      .values({
+        projectId: projId,
+        name: sectionNames[i],
+        sortOrder: i,
+        createdAt: now,
+      })
+      .run();
+    sectionCount++;
+  }
+}
+console.log(`  Sections: ${sectionCount} rows`);
+
+// Build section lookup: "project:section" → id
+const sectionRows = db.select().from(schema.sections).all();
+const sectionIdMap = new Map<string, number>();
+for (const s of sectionRows) {
+  const projName = projectNames.find((_, idx) => projectRows[idx].id === s.projectId)
+    || projectRows.find((p) => p.id === s.projectId)!.name;
+  sectionIdMap.set(`${projName}:${s.name}`, s.id);
+}
+
 // Insert posts
 for (const post of defaultPosts) {
+  const categoryId = catIdMap.get(post.cat)!;
+  const docProjectId = post.docProject ? projIdMap.get(post.docProject) ?? null : null;
+
   db.insert(schema.posts)
     .values({
       id: post.id,
       title: post.title,
       date: post.date,
-      cat: post.cat,
+      categoryId,
       time: post.time,
       excerpt: post.excerpt,
       content: post.content,
       draft: post.draft,
       visible: post.visible,
       sortOrder: post.sortOrder,
-      docProject: post.docProject,
+      docProjectId,
       createdAt: now,
       updatedAt: now,
     })
@@ -615,11 +714,12 @@ console.log(`  Posts: ${defaultPosts.length} rows`);
 // Insert docs
 for (let i = 0; i < defaultDocs.length; i++) {
   const doc = defaultDocs[i];
+  const sectionId = sectionIdMap.get(`${doc.project}:${doc.section}`)!;
+
   db.insert(schema.docs)
     .values({
       id: doc.id,
-      project: doc.project,
-      section: doc.section,
+      sectionId,
       title: doc.title,
       content: doc.content,
       draft: doc.draft,
