@@ -1,0 +1,18 @@
+<script>
+import mermaid from "mermaid";
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: document.documentElement.getAttribute("data-theme") === "light" ? "default" : "dark",
+  themeVariables: {
+    primaryColor: "#3b82f6",
+    primaryTextColor: "#e8e8ec",
+    primaryBorderColor: "#1e1e26",
+    lineColor: "#888890",
+    secondaryColor: "#121218",
+    tertiaryColor: "#16161e",
+  },
+});
+
+mermaid.run({ querySelector: ".mermaid" });
+</script>

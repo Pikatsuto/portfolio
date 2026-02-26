@@ -74,6 +74,11 @@ export async function renderMarkdown(md: string): Promise<string> {
         return `<h${depth} id="${id}">${text}</h${depth}>`;
       },
       code({ text, lang }) {
+        // Mermaid → render as a special container for client-side rendering
+        if (lang === "mermaid") {
+          return `<div class="mermaid-block"><pre class="mermaid">${escapeHtml(text)}</pre></div>`;
+        }
+
         // No language or unsupported → plain text with our theme color
         if (
           !lang ||

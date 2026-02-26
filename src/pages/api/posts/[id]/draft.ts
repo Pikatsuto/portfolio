@@ -4,7 +4,7 @@ import { posts, postHistory } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 
 export const PUT: APIRoute = async ({ params, request }) => {
-  const { content } = (await request.json()) as { content: string };
+  const { content, title } = (await request.json()) as { content: string; title?: string };
 
   const post = await db.select().from(posts).where(eq(posts.id, params.id!)).get();
   if (!post) {
@@ -29,7 +29,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   await db
     .update(posts)
-    .set({ draft: content, updatedAt: now })
+    .set({ draft: content, ...(title !== undefined && { title }), updatedAt: now })
     .where(eq(posts.id, params.id!));
 
   return new Response(JSON.stringify({ ok: true }), {

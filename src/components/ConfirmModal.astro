@@ -1,0 +1,182 @@
+<!-- Generic modal — confirm (yes/no) + prompt (text input) -->
+<div id="app-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-box">
+    <h3 id="app-modal-title" class="modal-title"></h3>
+    <p id="app-modal-msg" class="modal-msg"></p>
+    <input id="app-modal-input" class="modal-input" type="text" style="display: none;" placeholder="..." />
+    <div class="modal-sep"></div>
+    <div class="modal-actions">
+      <button id="app-modal-cancel" class="modal-btn modal-cancel" type="button">Annuler</button>
+      <button id="app-modal-ok" class="modal-btn modal-ok" type="button">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var overlay = document.getElementById("app-modal");
+    var titleEl = document.getElementById("app-modal-title");
+    var msgEl = document.getElementById("app-modal-msg");
+    var inputEl = document.getElementById("app-modal-input");
+    var okBtn = document.getElementById("app-modal-ok");
+    var cancelBtn = document.getElementById("app-modal-cancel");
+
+    function show(msg, opts) {
+      return new Promise(function(resolve) {
+        var isPrompt = opts && opts.input;
+        var isDanger = opts && opts.danger;
+
+        titleEl.textContent = (opts && opts.title) || (isDanger ? "Confirmation" : "Saisie");
+        msgEl.textContent = msg;
+        inputEl.style.display = isPrompt ? "block" : "none";
+        inputEl.value = (opts && opts.defaultValue) || "";
+        inputEl.placeholder = (opts && opts.placeholder) || "...";
+        okBtn.textContent = (opts && opts.okLabel) || "Confirmer";
+        okBtn.className = "modal-btn " + (isDanger ? "modal-danger" : "modal-primary");
+        overlay.style.display = "flex";
+        if (isPrompt) { inputEl.focus(); inputEl.select(); }
+
+        function cleanup() {
+          overlay.style.display = "none";
+          okBtn.removeEventListener("click", onOk);
+          cancelBtn.removeEventListener("click", onCancel);
+          overlay.removeEventListener("click", onOverlay);
+          document.removeEventListener("keydown", onKey);
+          inputEl.removeEventListener("keydown", onInputKey);
+        }
+        function onOk() { cleanup(); resolve(isPrompt ? inputEl.value : true); }
+        function onCancel() { cleanup(); resolve(isPrompt ? null : false); }
+        function onOverlay(e) { if (e.target === overlay) onCancel(); }
+        function onKey(e) { if (e.key === "Escape") onCancel(); }
+        function onInputKey(e) { if (e.key === "Enter") onOk(); }
+
+        okBtn.addEventListener("click", onOk);
+        cancelBtn.addEventListener("click", onCancel);
+        overlay.addEventListener("click", onOverlay);
+        document.addEventListener("keydown", onKey);
+        if (isPrompt) inputEl.addEventListener("keydown", onInputKey);
+      });
+    }
+
+    window.__confirmModal = function(msg) {
+      return show(msg, { danger: true, title: "Confirmation", okLabel: "Supprimer" });
+    };
+    window.__promptModal = function(msg, defaultValue) {
+      return show(msg, { input: true, defaultValue: defaultValue || "", title: "Nouveau nom", okLabel: "Créer", placeholder: "Entrez un nom..." });
+    };
+  })();
+</script>
+
+<style>
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 12, 18, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1.8rem 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.6rem;
+  }
+
+  .modal-msg {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--secondary);
+    line-height: 1.6;
+    margin-bottom: 1.2rem;
+  }
+
+  .modal-input {
+    width: 100%;
+    padding: 0.55rem 0.9rem;
+    margin-bottom: 1.2rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .modal-input:focus {
+    border-color: var(--blue);
+  }
+
+  .modal-input::placeholder {
+    color: var(--decorative);
+  }
+
+  .modal-sep {
+    height: 1px;
+    background: var(--line);
+    margin-bottom: 1.2rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .modal-btn {
+    padding: 0.4rem 1.1rem;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+
+  .modal-cancel {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+  }
+
+  .modal-cancel:hover {
+    border-color: var(--tertiary);
+    color: var(--white);
+  }
+
+  .modal-danger {
+    background: color-mix(in srgb, var(--red) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--red) 40%, transparent);
+    color: var(--red);
+  }
+
+  .modal-danger:hover {
+    background: color-mix(in srgb, var(--red) 25%, transparent);
+  }
+
+  .modal-primary {
+    background: color-mix(in srgb, var(--blue) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blue) 40%, transparent);
+    color: var(--blue-hover);
+  }
+
+  .modal-primary:hover {
+    background: color-mix(in srgb, var(--blue) 25%, transparent);
+  }
+</style>

@@ -44,7 +44,8 @@ export default function GitHistory({ history, restoreUrl }: Props) {
   }
 
   const restore = async (entry: HistoryEntry) => {
-    if (!confirm("Restaurer cette version ?")) return;
+    const confirmFn = (window as any).__confirmModal || ((msg: string) => Promise.resolve(confirm(msg)));
+    if (!(await confirmFn("Restaurer cette version ?"))) return;
     await fetch(restoreUrl, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
