@@ -1,0 +1,124 @@
+---
+import ThemeToggle from "./ThemeToggle";
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const links = [
+  { label: "Portfolio", href: "/" },
+  { label: "Blog", href: "/blog" },
+  { label: "Docs", href: "/docs" },
+];
+---
+
+<nav class="nav">
+  <a href="/" class="logo">Gabriel<span class="logo-dot">.</span></a>
+  <div class="nav-right">
+    {links.map(({ label, href }) => (
+      <a
+        href={href}
+        class:list={["nav-link", { active: currentPath === href || (href !== "/" && currentPath.startsWith(href)) }]}
+      >
+        {label}
+      </a>
+    ))}
+    <div class="nav-divider" />
+    <ThemeToggle client:load />
+    <a href="/admin/login" class="login-btn">Login</a>
+  </div>
+</nav>
+
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 3rem;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--white);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .logo-dot {
+    color: var(--blue);
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-link {
+    background: none;
+    border: none;
+    color: var(--tertiary);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    position: relative;
+    padding: 0.3rem 0;
+    transition: color 0.3s;
+    text-decoration: none;
+  }
+
+  .nav-link:hover {
+    color: var(--white);
+  }
+
+  .nav-link.active {
+    color: var(--white);
+  }
+
+  .nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--blue);
+  }
+
+  .nav-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--line);
+  }
+
+  .login-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .login-btn:hover {
+    border-color: var(--blue);
+    color: var(--blue-hover);
+  }
+</style>

@@ -1,0 +1,36 @@
+---
+import "../styles/global.css";
+import Nav from "../components/Nav.astro";
+
+interface Props {
+  title: string;
+  fullHeight?: boolean;
+}
+
+const { title, fullHeight = false } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+    <script is:inline>
+      (function() {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || t === "light") {
+          document.documentElement.setAttribute("data-theme", t);
+        } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+          document.documentElement.setAttribute("data-theme", "light");
+        } else {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+  </head>
+  <body style={fullHeight ? "display: flex; flex-direction: column; height: 100vh; overflow: hidden;" : ""}>
+    <Nav currentPath={currentPath} />
+    <slot />
+  </body>
+</html>

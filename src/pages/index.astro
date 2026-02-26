@@ -1,6 +1,5 @@
 ---
-import "../styles/global.css";
-import ThemeToggle from "../components/ThemeToggle";
+import BaseLayout from "../layouts/BaseLayout.astro";
 import { db } from "../db";
 import { portfolio, posts, docs, settings } from "../db/schema";
 import { count } from "drizzle-orm";
@@ -11,40 +10,14 @@ const docCount = await db.select({ n: count() }).from(docs).get();
 const maintenanceRow = await db.select().from(settings).get();
 ---
 
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Gabriel — Portfolio</title>
-    <!-- Inline theme script: prevents FOUC by setting data-theme before paint -->
-    <script is:inline>
-      (function() {
-        var t = localStorage.getItem("theme");
-        if (t === "dark" || t === "light") {
-          document.documentElement.setAttribute("data-theme", t);
-        } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-          document.documentElement.setAttribute("data-theme", "light");
-        } else {
-          document.documentElement.setAttribute("data-theme", "dark");
-        }
-      })();
-    </script>
-  </head>
-  <body>
-    <div style="max-width: 1100px; width: 100%; margin: 0 auto; padding: 2rem 3rem;">
-      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-        <h1 style="font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 600;">
-          Gabriel<span style="color: var(--blue);">.</span>
-        </h1>
-        <ThemeToggle client:load />
-      </div>
-      <p style="color: var(--body); margin-bottom: 1rem;">Phase 2 — Thème OK</p>
-      <ul style="color: var(--secondary); list-style: none;">
-        <li>Portfolio: {portfolioRow ? "loaded" : "missing"}</li>
-        <li>Posts: {postCount?.n ?? 0}</li>
-        <li>Docs: {docCount?.n ?? 0}</li>
-        <li>Maintenance: {maintenanceRow?.value ?? "N/A"}</li>
-      </ul>
-    </div>
-  </body>
-</html>
+<BaseLayout title="Gabriel — Portfolio">
+  <div style="max-width: 1100px; width: 100%; margin: 0 auto; padding: 2rem 3rem;">
+    <p style="color: var(--body); margin-bottom: 1rem;">Phase 3 — Layout + Nav OK</p>
+    <ul style="color: var(--secondary); list-style: none;">
+      <li>Portfolio: {portfolioRow ? "loaded" : "missing"}</li>
+      <li>Posts: {postCount?.n ?? 0}</li>
+      <li>Docs: {docCount?.n ?? 0}</li>
+      <li>Maintenance: {maintenanceRow?.value ?? "N/A"}</li>
+    </ul>
+  </div>
+</BaseLayout>
