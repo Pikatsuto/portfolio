@@ -8,9 +8,9 @@ import { parseMDX, renderMarkdown } from "../lib/markdown";
 
 const isAdmin = Astro.locals.isAdmin;
 const row = await db.select().from(portfolio).get();
-const mdx = row?.content ?? "";
+const displayMdx = isAdmin && row?.draft ? row.draft : (row?.content ?? "");
 const hasDraft = !!row?.draft;
-const { frontmatter: fm, body } = parseMDX(mdx);
+const { frontmatter: fm, body } = parseMDX(displayMdx);
 
 const name = (fm.name as string) || "Gabriel";
 const role = (fm.role as string) || "";
@@ -340,94 +340,11 @@ function renderHeadline(text: string): string {
     margin-top: 0.3rem;
   }
 
-  /* ─── MDX Body ─── */
+  /* md-body styles are in global.css — only override spacing for portfolio */
   .md-body {
     margin-top: 5rem;
     padding-bottom: 6rem;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--body);
     font-size: 0.95rem;
-    line-height: 1.9;
-  }
-
-  .md-body :global(.md-h2) {
-    font-family: 'Playfair Display', serif;
-    color: var(--white);
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin: 2.5rem 0 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .md-body :global(.md-h3) {
-    font-family: 'Playfair Display', serif;
-    color: var(--white);
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin: 2rem 0 0.8rem;
-  }
-
-  .md-body :global(p) {
-    margin-bottom: 0.8rem;
-    line-height: 1.9;
-  }
-
-  .md-body :global(ul) {
-    padding-left: 1.2rem;
-    margin-bottom: 1.2rem;
-  }
-
-  .md-body :global(li) {
-    margin-bottom: 0.4rem;
-    color: var(--body);
-    line-height: 1.8;
-  }
-
-  .md-body :global(strong) {
-    color: var(--white);
-    font-weight: 600;
-  }
-
-  .md-body :global(.md-inline-code) {
-    background: var(--code-bg);
-    border: 1px solid var(--line);
-    padding: 0.1rem 0.35rem;
-    border-radius: 3px;
-    font-size: 0.88em;
-    color: var(--blue-hover);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .md-body :global(.md-code) {
-    margin: 1.2rem 0;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .md-body :global(.md-code pre) {
-    background: var(--code-bg) !important;
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--blue);
-    padding: 1rem 1.3rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.84rem;
-    line-height: 1.7;
-    overflow-x: auto;
-  }
-
-  /* Plain text code blocks (no language) — use --blue-hover like JSX prototype */
-  .md-body :global(.md-code-plain) {
-    color: var(--blue-hover);
-  }
-
-  /* Shiki dual theme: use dark colors by default, light when [data-theme="light"] */
-  .md-body :global(.shiki span) {
-    color: var(--s-dark) !important;
-  }
-
-  :root[data-theme="light"] .md-body :global(.shiki span) {
-    color: var(--s-light) !important;
   }
 
   /* ─── Portfolio draft bar ─── */
