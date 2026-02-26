@@ -54,7 +54,8 @@ export default function ThemeToggle() {
     setMode(getSystemMode());
   };
 
-  const borderColor = auto ? "var(--blue)" : "var(--line)";
+  // "44" hex suffix = ~27% opacity, matching JSX prototype
+  const borderColor = auto ? "color-mix(in srgb, var(--blue) 27%, transparent)" : "var(--line)";
   const color = auto ? "var(--blue)" : "var(--tertiary)";
 
   return (
@@ -92,7 +93,7 @@ export default function ThemeToggle() {
       onMouseLeave={() => {
         if (btnRef.current) {
           Object.assign(btnRef.current.style, {
-            borderColor: auto ? "var(--blue)" : "var(--line)",
+            borderColor: auto ? "color-mix(in srgb, var(--blue) 27%, transparent)" : "var(--line)",
             color: auto ? "var(--blue)" : "var(--tertiary)",
           });
         }
