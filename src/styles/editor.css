@@ -1,0 +1,184 @@
+/* ── Editor layout — static CSS, no JS recalc ── */
+
+.editor-root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.editor-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.editor-header-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editor-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  color: var(--tertiary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.editor-title-input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--white);
+  padding: 0.4rem 0.8rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 4px;
+  outline: none;
+  width: 320px;
+}
+
+.editor-mode-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--tertiary);
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.editor-mode-btn.active {
+  background: color-mix(in srgb, var(--blue) 13%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 33%, transparent);
+  color: var(--blue-hover);
+}
+
+.editor-sep {
+  width: 1px;
+  background: var(--line);
+  margin: 0 0.3rem;
+  align-self: stretch;
+}
+
+.editor-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--tertiary);
+  padding: 0.35rem 1rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 4px;
+}
+
+.editor-save-btn {
+  background: var(--blue);
+  border: none;
+  color: #fff;
+  padding: 0.35rem 1.2rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.editor-save-btn.saving {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* ── Toolbar ── */
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem 1.5rem;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+  overflow-x: auto;
+}
+
+.editor-toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 0.4rem;
+  flex-shrink: 0;
+}
+
+.editor-toolbar-btn {
+  background: transparent;
+  border: none;
+  color: var(--tertiary);
+  padding: 0.3rem 0.45rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Editor area ── */
+
+.editor-area {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.editor-area--split {
+  grid-template-columns: 1fr 1fr;
+}
+
+.editor-area--edit,
+.editor-area--preview {
+  grid-template-columns: 1fr;
+}
+
+.editor-area > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Highlight overlay line divs ── */
+.editor-area pre[aria-hidden] > div {
+  min-height: 1lh;
+}
+
+/* ── Preview ── */
+
+.editor-preview {
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--body);
+  font-size: 0.95rem;
+  line-height: 1.9;
+  background: var(--surface);
+}
+
+.editor-preview--full {
+  background: var(--bg);
+}

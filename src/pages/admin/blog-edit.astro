@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Editor from "../../components/Editor";
+import { db } from "../../db";
+import { posts } from "../../db/schema";
+import { eq } from "drizzle-orm";
+
+const editId = Astro.url.searchParams.get("id");
+if (!editId) return Astro.redirect("/admin/blog");
+
+const post = await db.select().from(posts).where(eq(posts.id, editId)).get();
+if (!post) return Astro.redirect("/admin/blog");
+
+const content = post.draft || post.content;
+---
+
+<BaseLayout title={`Éditer — ${post.title}`} fullHeight>
+  <Editor
+    client:only="react"
+    content={content}
+    title={post.title}
+    saveUrl={`/api/posts/${post.id}/draft`}
+    cancelUrl="/admin/blog"
+    onTitleChange={true}
+  />
+</BaseLayout>
