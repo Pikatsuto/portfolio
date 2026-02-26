@@ -1,0 +1,260 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DraftBadge from "../../components/DraftBadge.astro";
+import VisToggle from "../../components/VisToggle";
+import { db } from "../../db";
+import { posts, postHistory } from "../../db/schema";
+import { eq } from "drizzle-orm";
+
+const allPosts = await db.select().from(posts).all();
+
+// Attach history counts
+const postsWithHistory = await Promise.all(
+  allPosts.map(async (p) => {
+    const history = await db
+      .select()
+      .from(postHistory)
+      .where(eq(postHistory.postId, p.id))
+      .all();
+    return { ...p, historyCount: history.length };
+  }),
+);
+
+const visibleCount = allPosts.filter((p) => p.visible).length;
+---
+
+<BaseLayout title="Admin Blog — Gabriel">
+  <div class="admin-page">
+    <div class="admin-inner">
+      <div class="admin-header">
+        <div>
+          <h1 class="admin-title">Admin Blog<span class="dot">.</span></h1>
+          <p class="admin-stats">{allPosts.length} articles · {visibleCount} publiés</p>
+        </div>
+        <button id="new-post-btn" class="new-btn">+ Nouvel article</button>
+      </div>
+
+      <div class="post-list">
+        {postsWithHistory.map((p) => (
+          <div class="post-item" data-post-id={p.id}>
+            <div class="post-meta">
+              <span class="post-cat">{p.cat}</span>
+              <span class="post-date">{p.date}</span>
+              <span class="post-chars">{p.content.length}c</span>
+            </div>
+            <h3 class:list={["post-title", { dimmed: !p.visible }]}>{p.title}</h3>
+            <div class="post-actions">
+              <VisToggle client:load visible={p.visible} postUrl={`/api/posts/${p.id}`} />
+              {p.draft && <DraftBadge />}
+              {p.draft && (
+                <button class="publish-btn-sm" data-publish-url={`/api/posts/${p.id}/publish`}>Publier</button>
+              )}
+              <div class="spacer" />
+              {p.historyCount > 0 && (
+                <span class="history-badge">⎇ {p.historyCount}</span>
+              )}
+              <a href={`/admin/blog?edit=${p.id}`} class="action-btn">Éditer</a>
+              <button class="action-btn action-btn-danger" data-delete-url={`/api/posts/${p.id}`}>Supprimer</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script is:inline>
+  // New post
+  document.getElementById("new-post-btn")?.addEventListener("click", async () => {
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Nouvel article",
+        date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
+        cat: "Draft",
+        time: "? min",
+        excerpt: "...",
+        content: "Commencez à écrire...",
+      }),
+    });
+    if (res.ok) window.location.reload();
+  });
+
+  // Publish buttons
+  document.querySelectorAll(".publish-btn-sm").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-publish-url");
+      const res = await fetch(url, { method: "POST" });
+      if (res.ok) window.location.reload();
+    });
+  });
+
+  // Delete buttons
+  document.querySelectorAll(".action-btn-danger").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Supprimer cet article ?")) return;
+      const url = btn.getAttribute("data-delete-url");
+      const res = await fetch(url, { method: "DELETE" });
+      if (res.ok) window.location.reload();
+    });
+  });
+</script>
+
+<style>
+  .admin-page {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 3rem;
+  }
+
+  .admin-inner {
+    padding: 4rem 0 8rem;
+  }
+
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+  }
+
+  .admin-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .admin-stats {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-size: 0.88rem;
+    margin-top: 0.3rem;
+  }
+
+  .new-btn {
+    background: var(--blue);
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.5rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .new-btn:hover {
+    opacity: 0.9;
+  }
+
+  .post-list {
+    border-top: 1px solid var(--line);
+  }
+
+  .post-item {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .post-meta {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0.3rem;
+  }
+
+  .post-cat {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    color: var(--blue);
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .post-date {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    color: var(--tertiary);
+  }
+
+  .post-chars {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--tertiary);
+  }
+
+  .post-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.6rem;
+    transition: color 0.2s;
+  }
+
+  .post-title.dimmed {
+    color: var(--tertiary);
+  }
+
+  .post-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .publish-btn-sm {
+    background: var(--green);
+    border: none;
+    color: #fff;
+    padding: 0.2rem 0.7rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+
+  .history-badge {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    color: var(--tertiary);
+  }
+
+  .action-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+
+  .action-btn:hover {
+    background: color-mix(in srgb, var(--blue) 8%, transparent);
+    border-color: color-mix(in srgb, var(--blue) 27%, transparent);
+    color: var(--blue-hover);
+  }
+
+  .action-btn-danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+</style>

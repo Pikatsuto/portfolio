@@ -1,0 +1,455 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DraftBadge from "../../components/DraftBadge.astro";
+import VisToggle from "../../components/VisToggle";
+import { db } from "../../db";
+import { docs, docHistory } from "../../db/schema";
+import { DOC_SECTIONS_ORDER } from "../../db/schema";
+import { eq } from "drizzle-orm";
+
+const allDocs = await db.select().from(docs).all();
+const allProjects = [...new Set(allDocs.map((d) => d.project))];
+
+// Active project from query param or first
+const activeProject = Astro.url.searchParams.get("project") || allProjects[0] || "";
+const projectDocs = allDocs.filter((d) => d.project === activeProject);
+
+// Build sections ordered by DOC_SECTIONS_ORDER
+const sectionMap = new Map<string, typeof projectDocs>();
+for (const d of projectDocs) {
+  const items = sectionMap.get(d.section) || [];
+  items.push(d);
+  sectionMap.set(d.section, items);
+}
+
+const orderedSections: Array<{ title: string; items: typeof projectDocs }> = [];
+for (const title of DOC_SECTIONS_ORDER) {
+  const items = sectionMap.get(title);
+  if (items && items.length > 0) {
+    orderedSections.push({ title, items });
+    sectionMap.delete(title);
+  }
+}
+for (const [title, items] of sectionMap) {
+  orderedSections.push({ title, items });
+}
+
+// History counts
+const docsWithHistory = await Promise.all(
+  projectDocs.map(async (d) => {
+    const history = await db
+      .select()
+      .from(docHistory)
+      .where(eq(docHistory.docId, d.id))
+      .all();
+    return { ...d, historyCount: history.length };
+  }),
+);
+
+const docMap = new Map(docsWithHistory.map((d) => [d.id, d]));
+const visibleCount = projectDocs.filter((d) => d.visible).length;
+const sectionNames = [...new Set(projectDocs.map((d) => d.section))];
+---
+
+<BaseLayout title="Admin Documentation — Gabriel">
+  <div class="admin-page">
+    <div class="admin-inner">
+      <div class="admin-header">
+        <div>
+          <h1 class="admin-title">Admin Documentation<span class="dot">.</span></h1>
+          <p class="admin-stats">{projectDocs.length} pages · {sectionNames.length} sections · {visibleCount} publiées</p>
+        </div>
+        <button id="new-project-btn" class="new-btn">+ Projet</button>
+      </div>
+
+      <!-- Project tabs -->
+      <div class="project-tabs">
+        {allProjects.map((proj) => (
+          <a
+            href={`/admin/docs?project=${encodeURIComponent(proj)}`}
+            class:list={["project-tab", { active: proj === activeProject }]}
+          >
+            {proj}
+            <span class="tab-count">{allDocs.filter((d) => d.project === proj).length}</span>
+          </a>
+        ))}
+      </div>
+
+      <!-- Add section -->
+      <div class="section-actions">
+        <button id="new-section-btn" class="outline-btn">+ Section</button>
+      </div>
+
+      <!-- Sections -->
+      {orderedSections.map((s) => (
+        <div class="section-block">
+          <div class="section-header">
+            <h2 class="section-name">{s.title}</h2>
+            <div class="section-btns">
+              <button class="add-page-btn" data-project={activeProject} data-section={s.title}>+ Page</button>
+              <button class="del-section-btn" data-project={activeProject} data-section={s.title}>Supprimer section</button>
+            </div>
+          </div>
+          {s.items.map((d) => {
+            const dh = docMap.get(d.id);
+            return (
+              <div class="doc-item">
+                <h3 class:list={["doc-title", { dimmed: !d.visible }]}>{d.title}</h3>
+                <div class="doc-actions">
+                  <VisToggle client:load visible={d.visible} postUrl={`/api/docs/${d.id}`} />
+                  <span class="doc-chars">{d.content.length}c</span>
+                  {d.draft && <DraftBadge />}
+                  {d.draft && (
+                    <button class="publish-btn-sm" data-publish-url={`/api/docs/${d.id}/publish`}>Publier</button>
+                  )}
+                  <div class="spacer" />
+                  {dh && dh.historyCount > 0 && (
+                    <span class="history-badge">⎇ {dh.historyCount}</span>
+                  )}
+                  <a href={`/admin/docs?edit=${d.id}`} class="action-btn">Éditer</a>
+                  <button class="action-btn action-btn-danger" data-delete-url={`/api/docs/${d.id}`}>Supprimer</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<script is:inline>
+  // New project
+  document.getElementById("new-project-btn")?.addEventListener("click", async () => {
+    const name = prompt("Nom du nouveau projet :");
+    if (!name || !name.trim()) return;
+    const res = await fetch("/api/docs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project: name.trim(),
+        section: "Démarrage",
+        title: "Introduction",
+        content: "Commencez à écrire...",
+      }),
+    });
+    if (res.ok) window.location.href = `/admin/docs?project=${encodeURIComponent(name.trim())}`;
+  });
+
+  // New section
+  document.getElementById("new-section-btn")?.addEventListener("click", async () => {
+    const name = prompt("Nom de la nouvelle section :");
+    if (!name || !name.trim()) return;
+    const params = new URLSearchParams(window.location.search);
+    const project = params.get("project") || document.querySelector(".project-tab.active")?.textContent?.trim()?.split(/\d/)[0]?.trim();
+    if (!project) return;
+    const res = await fetch("/api/docs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project,
+        section: name.trim(),
+        title: "Première page",
+        content: "Commencez à écrire...",
+      }),
+    });
+    if (res.ok) window.location.reload();
+  });
+
+  // Add page to section
+  document.querySelectorAll(".add-page-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const project = btn.getAttribute("data-project");
+      const section = btn.getAttribute("data-section");
+      const res = await fetch("/api/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project,
+          section,
+          title: "Nouvelle page",
+          content: "Commencez à écrire...",
+        }),
+      });
+      if (res.ok) window.location.reload();
+    });
+  });
+
+  // Delete section
+  document.querySelectorAll(".del-section-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const section = btn.getAttribute("data-section");
+      const project = btn.getAttribute("data-project");
+      if (!confirm(`Supprimer "${section}" et toutes ses pages ?`)) return;
+      const res = await fetch("/api/docs/section", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project, section }),
+      });
+      if (res.ok) window.location.reload();
+    });
+  });
+
+  // Publish
+  document.querySelectorAll(".publish-btn-sm").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-publish-url");
+      const res = await fetch(url, { method: "POST" });
+      if (res.ok) window.location.reload();
+    });
+  });
+
+  // Delete doc
+  document.querySelectorAll(".action-btn-danger").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Supprimer cette page ?")) return;
+      const url = btn.getAttribute("data-delete-url");
+      const res = await fetch(url, { method: "DELETE" });
+      if (res.ok) window.location.reload();
+    });
+  });
+</script>
+
+<style>
+  .admin-page {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 3rem;
+  }
+
+  .admin-inner {
+    padding: 4rem 0 8rem;
+  }
+
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .admin-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .admin-stats {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-size: 0.88rem;
+    margin-top: 0.3rem;
+  }
+
+  .new-btn {
+    background: var(--blue);
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.5rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+  }
+
+  /* Project tabs */
+  .project-tabs {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.5rem;
+  }
+
+  .project-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--tertiary);
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .project-tab.active {
+    background: color-mix(in srgb, var(--blue) 7%, transparent);
+    border-color: color-mix(in srgb, var(--blue) 27%, transparent);
+    color: var(--blue-hover);
+  }
+
+  .project-tab:hover:not(.active) {
+    color: var(--white);
+  }
+
+  .tab-count {
+    margin-left: 0.4rem;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+
+  .section-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+  }
+
+  .outline-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .outline-btn:hover {
+    border-color: color-mix(in srgb, var(--blue) 27%, transparent);
+    color: var(--blue-hover);
+  }
+
+  /* Sections */
+  .section-block {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .section-btns {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .add-page-btn {
+    background: color-mix(in srgb, var(--blue) 6%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--blue) 27%, transparent);
+    color: var(--blue-hover);
+    padding: 0.25rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 4px;
+  }
+
+  .del-section-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.25rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 4px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .del-section-btn:hover {
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+
+  /* Doc items */
+  .doc-item {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent);
+  }
+
+  .doc-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 0.4rem;
+    transition: color 0.2s;
+  }
+
+  .doc-title.dimmed {
+    color: var(--tertiary);
+  }
+
+  .doc-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  .doc-chars {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--tertiary);
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .publish-btn-sm {
+    background: var(--green);
+    border: none;
+    color: #fff;
+    padding: 0.2rem 0.7rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+
+  .history-badge {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    color: var(--tertiary);
+  }
+
+  .action-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+
+  .action-btn:hover {
+    background: color-mix(in srgb, var(--blue) 8%, transparent);
+    border-color: color-mix(in srgb, var(--blue) 27%, transparent);
+    color: var(--blue-hover);
+  }
+
+  .action-btn-danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+</style>
