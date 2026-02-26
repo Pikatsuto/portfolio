@@ -8,8 +8,20 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     volumes:
       - db-data:/app/data
-    ports:
-      - "${PORT:-4321}:4321"
+    expose:
+      - "4321"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portfolio.rule=Host(`${SERVICE_FQDN_APP}`)"
+      - "traefik.http.routers.portfolio.entrypoints=https"
+      - "traefik.http.routers.portfolio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portfolio.loadbalancer.server.port=4321"
+    networks:
+      - coolify
 
 volumes:
   db-data:
+
+networks:
+  coolify:
+    external: true
