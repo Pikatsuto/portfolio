@@ -33,24 +33,24 @@ skills:
     details: Nginx · CI/CD · ZFS
 
 projects:
-  - title: UniDash
+  - title: uni-dash
     description: Orchestration cloud self-hosted avec monitoring intégré et interface de gestion complète
     tags: [Docker, Vue.js, Python]
-    docs: UniDash
-  - title: AstralEmu
+    docs: uni-dash
+  - title: astral-emu
     description: Distribution Linux complète dédiée à l'émulation retro gaming avec builders dynamiques
     tags: [Linux, Bash, CI/CD]
-    docs: AstralEmu
-  - title: Centrarr
+    docs: astral-emu
+  - title: centrarr
     description: Serveur média avec authentification WebAuthn passkeys et gestion multi-utilisateurs
     tags: [Auth, Node.js, SQLite]
     blog: webauthn-node
-    docs: Centrarr
-  - title: IsolApp
+    docs: centrarr
+  - title: isol-app
     description: Système d'orchestration Docker en environnements chroot isolés haute performance
     tags: [Docker, Nginx, Bash]
     blog: docker-compose-quit
-    docs: IsolApp
+    docs: isol-app
 
 stats:
   - value: 5+
@@ -90,7 +90,7 @@ const defaultPosts = [
     time: "8 min de lecture",
     visible: true,
     sortOrder: 0,
-    docProject: "IsolApp",
+    docProject: "isol-app",
     draft: null,
     excerpt:
       "Après 3 ans d'utilisation intensive, voici pourquoi j'ai développé ma propre solution d'orchestration conteneurisée.",
@@ -105,7 +105,7 @@ Tout a commencé quand j'ai voulu déployer une quinzaine de services sur un mê
 - Du hot-reload de configuration sans restart
 - De la gestion de secrets qui ne soit pas du bind mount en clair
 
-## La solution : IsolApp
+## La solution : isol-app
 
 \`\`\`bash
 isolapp deploy --name grafana \\
@@ -133,7 +133,7 @@ graph LR
     B --> D[Container 2]
     B --> E[Container N]
 
-    F[IsolApp] -->|CLI directe| G[systemd-nspawn]
+    F[isol-app] -->|CLI directe| G[systemd-nspawn]
     F -->|cgroups v2| H[Isolation réseau]
     G --> I[Container 1]
     G --> J[Container 2]
@@ -178,7 +178,7 @@ graph LR
     time: "10 min",
     visible: true,
     sortOrder: 2,
-    docProject: "Centrarr",
+    docProject: "centrarr",
     draft: null,
     excerpt: "Implémentation passkeys de A à Z.",
     content: "Article complet à venir...",
@@ -189,10 +189,10 @@ graph LR
 // ─── Docs pages (canonical from JSX prototype) ───
 
 const defaultDocs = [
-  // UniDash docs
+  // uni-dash docs
   {
     id: "ud-installation",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Démarrage",
     title: "Installation",
     visible: true,
@@ -227,7 +227,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-configuration",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Démarrage",
     title: "Configuration",
     visible: true,
@@ -237,7 +237,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-deploiement",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Démarrage",
     title: "Déploiement",
     visible: true,
@@ -247,17 +247,17 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-vue-ensemble",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Architecture",
     title: "Vue d'ensemble",
     visible: true,
     draft: null,
     history: [],
-    content: "Architecture générale de UniDash à venir...",
+    content: "Architecture générale de uni-dash à venir...",
   },
   {
     id: "ud-services",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Architecture",
     title: "Services",
     visible: true,
@@ -267,7 +267,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-base-de-donnees",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Architecture",
     title: "Base de données",
     visible: true,
@@ -277,7 +277,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-authentification",
-    project: "UniDash",
+    project: "uni-dash",
     section: "API Reference",
     title: "Authentification",
     visible: true,
@@ -287,7 +287,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-endpoints",
-    project: "UniDash",
+    project: "uni-dash",
     section: "API Reference",
     title: "Endpoints",
     visible: true,
@@ -297,7 +297,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-webhooks",
-    project: "UniDash",
+    project: "uni-dash",
     section: "API Reference",
     title: "Webhooks",
     visible: true,
@@ -307,7 +307,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-migration",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Guides avancés",
     title: "Migration",
     visible: true,
@@ -317,7 +317,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-backup",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Guides avancés",
     title: "Backup",
     visible: true,
@@ -327,7 +327,7 @@ curl http://localhost:3000/api/health
   },
   {
     id: "ud-monitoring",
-    project: "UniDash",
+    project: "uni-dash",
     section: "Guides avancés",
     title: "Monitoring",
     visible: true,
@@ -335,10 +335,10 @@ curl http://localhost:3000/api/health
     history: [],
     content: "Guide de monitoring à venir...",
   },
-  // AstralEmu docs
+  // astral-emu docs
   {
     id: "ae-installation",
-    project: "AstralEmu",
+    project: "astral-emu",
     section: "Démarrage",
     title: "Installation",
     visible: true,
@@ -365,7 +365,7 @@ astralemu start
   },
   {
     id: "ae-roms",
-    project: "AstralEmu",
+    project: "astral-emu",
     section: "Démarrage",
     title: "Gestion des ROMs",
     visible: true,
@@ -375,7 +375,7 @@ astralemu start
   },
   {
     id: "ae-builders",
-    project: "AstralEmu",
+    project: "astral-emu",
     section: "Architecture",
     title: "Builders dynamiques",
     visible: true,
@@ -385,7 +385,7 @@ astralemu start
   },
   {
     id: "ae-themes",
-    project: "AstralEmu",
+    project: "astral-emu",
     section: "Personnalisation",
     title: "Thèmes EmulationStation",
     visible: true,
@@ -393,10 +393,10 @@ astralemu start
     history: [],
     content: "Guide de personnalisation des thèmes à venir...",
   },
-  // Centrarr docs
+  // centrarr docs
   {
     id: "ct-installation",
-    project: "Centrarr",
+    project: "centrarr",
     section: "Démarrage",
     title: "Installation",
     visible: true,
@@ -414,13 +414,13 @@ centrarr init
 La configuration des passkeys se fait dans \`config.json\`.
 
 \`\`\`env
-WEBAUTHN_RP_NAME=Centrarr
+WEBAUTHN_RP_NAME=centrarr
 WEBAUTHN_RP_ID=media.example.com
 \`\`\``,
   },
   {
     id: "ct-webauthn",
-    project: "Centrarr",
+    project: "centrarr",
     section: "Authentification",
     title: "WebAuthn Passkeys",
     visible: true,
@@ -430,7 +430,7 @@ WEBAUTHN_RP_ID=media.example.com
   },
   {
     id: "ct-users",
-    project: "Centrarr",
+    project: "centrarr",
     section: "Authentification",
     title: "Gestion utilisateurs",
     visible: true,
@@ -438,10 +438,10 @@ WEBAUTHN_RP_ID=media.example.com
     history: [],
     content: "Gestion des utilisateurs et sous-comptes à venir...",
   },
-  // IsolApp docs
+  // isol-app docs
   {
     id: "ia-installation",
-    project: "IsolApp",
+    project: "isol-app",
     section: "Démarrage",
     title: "Installation",
     visible: true,
@@ -462,7 +462,7 @@ cd isolapp && make install
   },
   {
     id: "ia-chroot",
-    project: "IsolApp",
+    project: "isol-app",
     section: "Architecture",
     title: "Environnements chroot",
     visible: true,
@@ -472,7 +472,7 @@ cd isolapp && make install
   },
   {
     id: "ia-networking",
-    project: "IsolApp",
+    project: "isol-app",
     section: "Architecture",
     title: "Réseau isolé",
     visible: true,
@@ -485,10 +485,10 @@ cd isolapp && make install
 // ─── Section order per project (canonical) ───
 
 const sectionOrders: Record<string, string[]> = {
-  UniDash: ["Démarrage", "Architecture", "API Reference", "Guides avancés"],
-  AstralEmu: ["Démarrage", "Architecture", "Personnalisation"],
-  Centrarr: ["Démarrage", "Authentification"],
-  IsolApp: ["Démarrage", "Architecture"],
+  uni-dash: ["Démarrage", "Architecture", "API Reference", "Guides avancés"],
+  astral-emu: ["Démarrage", "Architecture", "Personnalisation"],
+  centrarr: ["Démarrage", "Authentification"],
+  isol-app: ["Démarrage", "Architecture"],
 };
 
 // ─── Seed execution ───
