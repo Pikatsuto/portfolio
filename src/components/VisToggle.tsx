@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Check } from "lucide-react";
 
 interface Props {
   visible: boolean;
@@ -22,7 +23,7 @@ export default function VisToggle({ visible, postUrl }: Props) {
     if (boxRef.current) {
       boxRef.current.style.borderColor = newVal ? "var(--green)" : "var(--line)";
       boxRef.current.style.background = newVal ? "color-mix(in srgb, var(--green) 12%, transparent)" : "transparent";
-      boxRef.current.innerHTML = newVal ? '<span style="color:var(--green);font-size:0.7rem;font-weight:700">✓</span>' : "";
+      boxRef.current.innerHTML = newVal ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : "";
     }
     if (textRef.current) {
       textRef.current.textContent = newVal ? "Visible" : "Brouillon";
@@ -74,7 +75,7 @@ export default function VisToggle({ visible, postUrl }: Props) {
           transition: "border-color 0.2s, background 0.2s",
         }}
       >
-        {visible && <span style={{ color: "var(--green)", fontSize: "0.7rem", fontWeight: 700 }}>✓</span>}
+        {visible && <Check size={12} color="var(--green)" strokeWidth={3} />}
       </div>
       <span ref={textRef}>{visible ? "Visible" : "Brouillon"}</span>
     </label>

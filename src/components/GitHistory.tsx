@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { GitBranch } from "lucide-react";
 
 interface HistoryEntry {
   id: number;
@@ -91,7 +92,7 @@ export default function GitHistory({ history, restoreUrl }: Props) {
           gap: "0.3rem",
         }}
       >
-        <span style={{ fontSize: "0.75rem" }}>⎇</span> {history.length} commit
+        <GitBranch size={12} /> {history.length} commit
         {history.length > 1 ? "s" : ""}
       </button>
       {open && (

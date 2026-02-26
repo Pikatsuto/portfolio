@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Sun, Moon } from "lucide-react";
 
 function getSystemMode(): "dark" | "light" {
   if (typeof window === "undefined") return "dark";
@@ -99,7 +100,7 @@ export default function ThemeToggle() {
         }
       }}
     >
-      {mode === "dark" ? "☀" : "☾"}
+      {mode === "dark" ? <Sun size={16} /> : <Moon size={16} />}
     </button>
   );
 }
