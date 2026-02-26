@@ -22,9 +22,12 @@ export const PUT: APIRoute = async ({ request }) => {
 
   if (body.maintenance !== undefined) {
     await db
-      .update(settings)
-      .set({ value: body.maintenance ? "true" : "false" })
-      .where(eq(settings.key, "maintenance"));
+      .insert(settings)
+      .values({ key: "maintenance", value: body.maintenance ? "true" : "false" })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value: body.maintenance ? "true" : "false" },
+      });
   }
 
   return new Response(JSON.stringify({ ok: true }), {

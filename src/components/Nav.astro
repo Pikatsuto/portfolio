@@ -52,6 +52,11 @@ const links = [
     )}
     <div class="nav-divider" />
     <ThemeToggle client:load />
+    {isAdmin && (
+      <button id="maintenance-btn" class:list={["maint-btn", { active: maintenance }]}>
+        {maintenance ? "🔧 ON" : "🔧 OFF"}
+      </button>
+    )}
     {isAdmin ? (
       <button id="admin-btn" class="admin-btn">● Admin</button>
     ) : (
@@ -65,6 +70,16 @@ const links = [
     document.getElementById("admin-btn")?.addEventListener("click", async () => {
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/";
+    });
+    document.getElementById("maintenance-btn")?.addEventListener("click", async () => {
+      const btn = document.getElementById("maintenance-btn");
+      const isActive = btn.classList.contains("active");
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maintenance: !isActive }),
+      });
+      if (res.ok) window.location.reload();
     });
   </script>
 )}
@@ -185,5 +200,29 @@ const links = [
 
   .admin-btn:hover {
     background: color-mix(in srgb, var(--green) 25%, transparent);
+  }
+
+  .maint-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+
+  .maint-btn:hover {
+    border-color: rgba(245, 158, 11, 0.4);
+    color: rgb(245, 158, 11);
+  }
+
+  .maint-btn.active {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: rgb(245, 158, 11);
   }
 </style>
