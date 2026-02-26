@@ -33,6 +33,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     time: string;
     excerpt: string;
     visible: boolean;
+    sortOrder: number;
     docProject: string | null;
   }>;
 

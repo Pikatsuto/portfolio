@@ -12,6 +12,7 @@ export const posts = sqliteTable("posts", {
   content: text("content").notNull(),
   draft: text("draft"),
   visible: integer("visible", { mode: "boolean" }).notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
   docProject: text("doc_project"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),

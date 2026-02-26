@@ -7,8 +7,8 @@ import { eq } from "drizzle-orm";
 
 const isAdmin = Astro.locals.isAdmin;
 const allPosts = isAdmin
-  ? await db.select().from(posts).all()
-  : await db.select().from(posts).where(eq(posts.visible, true)).all();
+  ? await db.select().from(posts).orderBy(posts.sortOrder).all()
+  : await db.select().from(posts).where(eq(posts.visible, true)).orderBy(posts.sortOrder).all();
 ---
 
 <BaseLayout title="Journal — Gabriel">

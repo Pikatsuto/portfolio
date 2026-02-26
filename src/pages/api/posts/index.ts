@@ -48,6 +48,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   const now = new Date().toISOString();
 
+  // Push all existing posts down by 1, new article gets sortOrder 0
+  const all = await db.select().from(posts).all();
+  for (const p of all) {
+    await db.update(posts).set({ sortOrder: p.sortOrder + 1 }).where(eq(posts.id, p.id));
+  }
+
   await db.insert(posts).values({
     id,
     title: body.title,
@@ -58,6 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
     content: body.content,
     draft: null,
     visible: false,
+    sortOrder: 0,
     docProject: null,
     createdAt: now,
     updatedAt: now,

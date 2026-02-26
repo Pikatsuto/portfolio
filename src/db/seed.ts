@@ -89,6 +89,7 @@ const defaultPosts = [
     cat: "DevOps",
     time: "8 min de lecture",
     visible: true,
+    sortOrder: 0,
     docProject: "IsolApp",
     draft: null,
     excerpt:
@@ -123,6 +124,26 @@ Chaque commande correspond à un appel système réel. Pas d'abstraction, pas de
 - **Ressources** : contrôle granulaire via cgroups v2
 - **Fiabilité** : 99.97% d'uptime
 
+## Architecture comparée
+
+\`\`\`mermaid
+graph LR
+    A[Docker Compose] -->|docker-compose.yml| B[Docker Daemon]
+    B --> C[Container 1]
+    B --> D[Container 2]
+    B --> E[Container N]
+
+    F[IsolApp] -->|CLI directe| G[systemd-nspawn]
+    F -->|cgroups v2| H[Isolation réseau]
+    G --> I[Container 1]
+    G --> J[Container 2]
+    H --> I
+    H --> J
+
+    style A fill:#e74c3c,color:#fff
+    style F fill:#3b82f6,color:#fff
+\`\`\`
+
 ## Recommandation
 
 **Non**, ne quittez pas Compose si vous avez moins de 10 services. Mais si vous gérez un homelab complexe et avez une allergie aux boîtes noires : écrire votre propre solution paie.`,
@@ -141,6 +162,7 @@ Chaque commande correspond à un appel système réel. Pas d'abstraction, pas de
     cat: "Sysadmin",
     time: "12 min",
     visible: true,
+    sortOrder: 1,
     docProject: null,
     draft: null,
     excerpt:
@@ -155,6 +177,7 @@ Chaque commande correspond à un appel système réel. Pas d'abstraction, pas de
     cat: "Dev",
     time: "10 min",
     visible: true,
+    sortOrder: 2,
     docProject: "Centrarr",
     draft: null,
     excerpt: "Implémentation passkeys de A à Z.",
@@ -174,7 +197,7 @@ const defaultDocs = [
     title: "Installation",
     visible: true,
     draft: null,
-    history: [{ date: "01 Nov 2025 14:00", summary: "Création" }],
+    history: [{ date: "01 Nov 2025 14:00", summary: "Création", content: "..." }],
     content: `Assurez-vous d'avoir installé :
 
 - **Docker** version 24+
@@ -475,6 +498,7 @@ sqlite.exec(`
     content TEXT NOT NULL,
     draft TEXT,
     visible INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
     doc_project TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -567,6 +591,7 @@ for (const post of defaultPosts) {
       content: post.content,
       draft: post.draft,
       visible: post.visible,
+      sortOrder: post.sortOrder,
       docProject: post.docProject,
       createdAt: now,
       updatedAt: now,
