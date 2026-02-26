@@ -1,24 +1,27 @@
 ---
 import ThemeToggle from "./ThemeToggle";
+import GlobalSearch from "./GlobalSearch";
+import Icon from "./Icon.astro";
 
 interface Props {
   currentPath: string;
   isAdmin?: boolean;
   maintenance?: boolean;
+  searchPosts?: Array<{ id: string; title: string; excerpt: string; cat: string; visible: boolean }>;
 }
 
-const { currentPath, isAdmin = false, maintenance = false } = Astro.props;
+const { currentPath, isAdmin = false, maintenance = false, searchPosts = [] } = Astro.props;
 
 const links = [
   { label: "Portfolio", href: "/" },
-  { label: "Blog", href: "/blog" },
+  { label: "Articles", href: "/blog" },
   { label: "Docs", href: "/docs" },
 ];
 ---
 
 {maintenance && isAdmin && (
   <div class="maintenance-banner">
-    🔧 Mode maintenance actif — les visiteurs voient la page de maintenance.
+    <Icon name="wrench" size={14} /> Mode maintenance actif — les visiteurs voient la page de maintenance.
   </div>
 )}
 
@@ -39,7 +42,7 @@ const links = [
         href="/admin/blog"
         class:list={["nav-link", { active: currentPath === "/admin/blog" }]}
       >
-        Admin Blog
+        Admin Articles
       </a>
     )}
     {isAdmin && (
@@ -51,29 +54,32 @@ const links = [
       </a>
     )}
     {!(maintenance && !isAdmin) && <div class="nav-divider" />}
+    <GlobalSearch client:load posts={searchPosts} />
     <ThemeToggle client:load />
     {isAdmin && (
       <button id="maintenance-btn" class:list={["maint-btn", { active: maintenance }]}>
-        {maintenance ? "🔧 ON" : "🔧 OFF"}
+        <Icon name="wrench" size={14} /> {maintenance ? "ON" : "OFF"}
       </button>
     )}
     {isAdmin ? (
-      <button id="admin-btn" class="admin-btn">● Admin</button>
+      <button id="admin-btn" class="admin-btn">Déconnexion</button>
     ) : (
       <a href="/admin/login" class="login-btn">Login</a>
     )}
   </div>
   <div class="nav-mobile-right">
+    <GlobalSearch client:load posts={searchPosts} />
     <ThemeToggle client:load />
     <button class="burger" id="burger-btn" aria-label="Menu">
-      <span class="burger-icon">☰</span>
+      <span class="burger-icon"><Icon name="menu" size={20} /></span>
     </button>
   </div>
 </nav>
 
-<!-- Mobile menu panel -->
+<!-- Mobile drawer -->
 <div class="nav-mobile-panel" id="mobile-panel">
-  <div class="mobile-panel-links">
+  <div class="mobile-backdrop" id="mobile-backdrop"></div>
+  <div class="mobile-drawer">
     {!(maintenance && !isAdmin) && links.map(({ label, href }) => (
       <a
         href={href}
@@ -88,7 +94,7 @@ const links = [
         href="/admin/blog"
         class:list={["mobile-link", { active: currentPath === "/admin/blog" }]}
       >
-        Admin Blog
+        Admin Articles
       </a>
     )}
     {isAdmin && (
@@ -99,14 +105,18 @@ const links = [
         Admin Docs
       </a>
     )}
+    <div class="mobile-spacer" />
     <div class="mobile-divider" />
-    {isAdmin && (
-      <button id="maintenance-btn-mobile" class:list={["maint-btn", { active: maintenance }]}>
-        {maintenance ? "🔧 Maintenance ON" : "🔧 Maintenance OFF"}
-      </button>
-    )}
     {isAdmin ? (
-      <button id="admin-btn-mobile" class="admin-btn">● Déconnexion</button>
+      <div class="mobile-admin-footer">
+        <span class="mobile-admin-label">Admin :</span>
+        <div class="mobile-admin-actions">
+          <button id="maintenance-btn-mobile" class:list={["maint-btn-round", { active: maintenance }]}>
+            <Icon name="wrench" size={14} />
+          </button>
+          <button id="admin-btn-mobile" class="mobile-logout-btn">Déconnexion</button>
+        </div>
+      </div>
     ) : (
       <a href="/admin/login" class="login-btn">Login</a>
     )}
@@ -120,20 +130,28 @@ const links = [
     const panel = document.getElementById("mobile-panel");
     if (!burger || !panel) return;
 
+    var menuSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>';
+    var closeSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
     burger.addEventListener("click", () => {
       const isOpen = panel.classList.toggle("open");
-      burger.querySelector(".burger-icon").textContent = isOpen ? "✕" : "☰";
+      burger.querySelector(".burger-icon").innerHTML = isOpen ? closeSvg : menuSvg;
       document.body.style.overflow = isOpen ? "hidden" : "";
     });
 
+    function closePanel() {
+      panel.classList.remove("open");
+      burger.querySelector(".burger-icon").innerHTML = menuSvg;
+      document.body.style.overflow = "";
+    }
+
     // Close panel on link click
     panel.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        panel.classList.remove("open");
-        burger.querySelector(".burger-icon").textContent = "☰";
-        document.body.style.overflow = "";
-      });
+      link.addEventListener("click", closePanel);
     });
+
+    // Close panel on backdrop click
+    document.getElementById("mobile-backdrop")?.addEventListener("click", closePanel);
   })();
 </script>
 
@@ -171,8 +189,12 @@ const links = [
     padding: 0.4rem 3rem;
     text-align: center;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
+    font-size: var(--fs-xs);
     color: rgb(245, 158, 11);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
   }
 
   .nav {
@@ -192,7 +214,7 @@ const links = [
 
   .logo {
     font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
+    font-size: var(--fs-h2);
     font-weight: 700;
     color: var(--white);
     text-decoration: none;
@@ -215,7 +237,7 @@ const links = [
     color: var(--tertiary);
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
+    font-size: var(--fs-sm);
     font-weight: 500;
     position: relative;
     padding: 0.3rem 0;
@@ -253,7 +275,7 @@ const links = [
     color: var(--tertiary);
     padding: 0.3rem 0.8rem;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
     border-radius: 4px;
@@ -272,7 +294,7 @@ const links = [
     color: var(--green);
     padding: 0.3rem 0.8rem;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
     border-radius: 4px;
@@ -289,11 +311,14 @@ const links = [
     color: var(--tertiary);
     padding: 0.3rem 0.8rem;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: var(--fs-xs);
     font-family: 'DM Sans', sans-serif;
     font-weight: 500;
     border-radius: 4px;
     transition: color 0.2s, border-color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
   }
 
   .maint-btn:hover {
@@ -318,44 +343,64 @@ const links = [
     background: none;
     border: none;
     color: var(--white);
-    font-size: 1.5rem;
+    font-size: var(--fs-h2);
     cursor: pointer;
     padding: 0.2rem;
     line-height: 1;
   }
 
-  /* ─── Mobile panel ─── */
+  /* ─── Mobile drawer ─── */
   .nav-mobile-panel {
     display: none;
     position: fixed;
-    top: var(--nav-height);
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--bg);
     z-index: 99;
-    padding: 2rem 1.5rem;
-    overflow-y: auto;
   }
 
   .nav-mobile-panel.open {
-    display: block;
+    display: flex;
   }
 
-  .mobile-panel-links {
+  .mobile-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .mobile-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 80vw;
+    background: var(--surface);
+    border-left: 1px solid var(--line);
+    padding: calc(var(--nav-height) + 1rem) 1.5rem 1.5rem;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.3rem;
+    animation: slideIn 0.2s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
   }
 
   .mobile-link {
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.1rem;
+    font-size: var(--fs-body);
     font-weight: 500;
     color: var(--tertiary);
     text-decoration: none;
-    padding: 0.7rem 0;
-    border-bottom: 1px solid var(--line);
+    padding: 0.6rem 0;
     transition: color 0.2s;
   }
 
@@ -367,37 +412,81 @@ const links = [
     color: var(--blue-hover);
   }
 
+  .mobile-spacer {
+    flex: 1;
+  }
+
   .mobile-divider {
     height: 1px;
     background: var(--line);
-    margin: 0.5rem 0;
+    margin: 0.3rem 0;
   }
 
-  /* ─── Tablet: 768–1024px ─── */
-  @media (max-width: 1024px) {
-    .nav {
-      padding: 0 1.5rem;
-    }
-
-    .nav-right {
-      gap: 1.2rem;
-    }
-
-    .nav-divider {
-      display: none;
-    }
-
-    .logo {
-      font-size: 1.2rem;
-    }
-
-    .maintenance-banner {
-      padding: 0.4rem 1.5rem;
-    }
+  .mobile-admin-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.3rem 0;
   }
 
-  /* ─── Mobile: < 800px — burger menu ─── */
-  @media (max-width: 800px) {
+  .mobile-admin-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+    font-weight: 500;
+  }
+
+  .mobile-admin-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .maint-btn-round {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+
+  .maint-btn-round:hover {
+    border-color: rgba(245, 158, 11, 0.4);
+    color: rgb(245, 158, 11);
+  }
+
+  .maint-btn-round.active {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: rgb(245, 158, 11);
+  }
+
+  .mobile-logout-btn {
+    background: color-mix(in srgb, var(--green) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--green) 27%, transparent);
+    color: var(--green);
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    font-size: var(--fs-xs);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .mobile-logout-btn:hover {
+    background: color-mix(in srgb, var(--green) 25%, transparent);
+  }
+
+  /* ─── Tablet / burger menu: ≤ 1280px ─── */
+  @media (max-width: 1280px) {
     .nav {
       padding: 0 1.2rem;
     }
@@ -412,7 +501,6 @@ const links = [
 
     .maintenance-banner {
       padding: 0.4rem 1.2rem;
-      font-size: 0.72rem;
     }
   }
 </style>
