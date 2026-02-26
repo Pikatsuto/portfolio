@@ -1,16 +1,36 @@
 ---
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
+import { db } from "../db";
+import { posts, categories } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 interface Props {
   title: string;
+  description?: string;
   fullHeight?: boolean;
 }
 
-const { title, fullHeight = false } = Astro.props;
+const { title, description = "Portfolio de Gabriel Guillou — DevOps, Sysadmin, Full-Stack", fullHeight = false } = Astro.props;
 const currentPath = Astro.url.pathname;
 const isAdmin = Astro.locals.isAdmin;
 const maintenance = Astro.locals.maintenance;
+
+// Fetch posts for global search
+const searchPosts = await db
+  .select({
+    id: posts.id,
+    title: posts.title,
+    excerpt: posts.excerpt,
+    cat: categories.name,
+    visible: posts.visible,
+  })
+  .from(posts)
+  .leftJoin(categories, eq(posts.categoryId, categories.id))
+  .where(eq(posts.visible, true))
+  .all();
+
+const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
 ---
 
 <html lang="fr">
@@ -19,6 +39,12 @@ const maintenance = Astro.locals.maintenance;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <link rel="canonical" href={Astro.url.href} />
     <script is:inline>
       (function() {
         var t = localStorage.getItem("theme");
@@ -33,7 +59,7 @@ const maintenance = Astro.locals.maintenance;
     </script>
   </head>
   <body style={fullHeight ? "display: flex; flex-direction: column; height: 100vh; overflow: hidden;" : ""}>
-    <Nav currentPath={currentPath} isAdmin={isAdmin} maintenance={maintenance} />
+    <Nav currentPath={currentPath} isAdmin={isAdmin} maintenance={maintenance} searchPosts={searchPostsSafe} />
     <slot />
   </body>
 </html>
