@@ -9,7 +9,9 @@ services:
     volumes:
       - db-data:/app/data
     expose:
-      - "80:4321"
+      - "4321"
+    labels:
+      - traefik.http.services.app.loadbalancer.server.port=4321
 
 volumes:
   db-data:
