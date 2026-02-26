@@ -303,7 +303,8 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
   const [yamlTab, setYamlTab] = useState("general");
   const mdRef = useRef(initialBody);
   const previewTimer = useRef(0);
-  const [mode, setMode] = useState<"edit" | "split" | "preview">("split");
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 1280;
+  const [mode, setMode] = useState<"edit" | "split" | "preview">(isMobile ? "edit" : "split");
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -332,6 +333,16 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
     }));
 
   /* ── Preview ── */
+
+  // Auto-switch to edit mode on small screens
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1280px)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) setMode((m) => m === "split" ? "edit" : m);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     if (mode !== "edit" && previewRef.current) {
@@ -434,7 +445,12 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
           <span className="mdx-label">MDX</span>
           <span className="mdx-title">Portfolio</span>
         </div>
-        <div className="editor-header-right">
+        <div className="editor-header-modes">
+          {modes.map((m) => (
+            <button key={m.key} onClick={() => setMode(m.key)} className={`editor-mode-btn${mode === m.key ? " active" : ""}${m.key === "split" ? " editor-mode-split" : ""}`}>{m.label}</button>
+          ))}
+        </div>
+        <div className="editor-header-actions">
           <button onClick={() => { window.location.href = cancelUrl; }} className="editor-cancel-btn">Annuler</button>
           <button onClick={handleSave} disabled={saving} className={`editor-save-btn${saving ? " saving" : ""}`}>
             {saving ? "Sauvegarde..." : "Sauvegarder"}
@@ -533,7 +549,6 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
 
       {/* Toolbar */}
       <div className="editor-toolbar">
-        <span className="yaml-tabs-label">MDX</span>
         {tb.map((item, i) =>
           item.sep ? (
             <div key={i} className="editor-toolbar-sep" />
@@ -556,10 +571,6 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
             </button>
           )
         )}
-        <div style={{ flex: 1 }} />
-        {modes.map((m) => (
-          <button key={m.key} onClick={() => setMode(m.key)} className={`editor-mode-btn${mode === m.key ? " active" : ""}`}>{m.label}</button>
-        ))}
       </div>
 
       {/* Editor area */}

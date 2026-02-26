@@ -282,10 +282,21 @@ type TbItem = { icon: React.ReactNode; label: string; a: () => void; sep?: never
 export default function Editor({ content, title: initialTitle, saveUrl, cancelUrl, onTitleChange }: Props) {
   const mdRef = useRef(content);
   const previewTimer = useRef(0);
-  const [mode, setMode] = useState<"edit" | "split" | "preview">("split");
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 1280;
+  const [mode, setMode] = useState<"edit" | "split" | "preview">(isMobile ? "edit" : "split");
   const [title, setTitle] = useState(initialTitle || "");
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Auto-switch to edit mode on small screens
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1280px)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) setMode((m) => m === "split" ? "edit" : m);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // Initial preview render + re-render when mode makes preview visible
   useEffect(() => {
@@ -382,11 +393,12 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
             <input value={title} onChange={(e) => setTitle(e.target.value)} className="editor-title-input" />
           )}
         </div>
-        <div className="editor-header-right">
+        <div className="editor-header-modes">
           {modes.map((m) => (
-            <button key={m.key} onClick={() => setMode(m.key)} className={`editor-mode-btn${mode === m.key ? " active" : ""}`}>{m.label}</button>
+            <button key={m.key} onClick={() => setMode(m.key)} className={`editor-mode-btn${mode === m.key ? " active" : ""}${m.key === "split" ? " editor-mode-split" : ""}`}>{m.label}</button>
           ))}
-          <div className="editor-sep" />
+        </div>
+        <div className="editor-header-actions">
           <button onClick={() => { window.location.href = cancelUrl; }} className="editor-cancel-btn">Annuler</button>
           <button onClick={handleSave} disabled={saving} className={`editor-save-btn${saving ? " saving" : ""}`}>{saving ? "Sauvegarde..." : "Sauvegarder"}</button>
         </div>

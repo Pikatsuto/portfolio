@@ -203,3 +203,15 @@
 .yaml-add-btn:hover {
   background: color-mix(in srgb, var(--blue) 10%, transparent);
 }
+
+/* ── Mobile ── */
+@media (max-width: 1280px) {
+  .yaml-tabs {
+    padding: 0 0.8rem;
+  }
+
+  .yaml-form {
+    padding: 1rem 0.8rem;
+  }
+
+}

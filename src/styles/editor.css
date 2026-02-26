@@ -12,7 +12,7 @@
 .editor-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.8rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
@@ -23,11 +23,20 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
+  min-width: 0;
 }
 
-.editor-header-right {
+.editor-header-modes {
   display: flex;
   gap: 0.5rem;
+}
+
+.editor-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  border-left: 1px solid var(--line);
+  padding-left: 0.5rem;
 }
 
 .editor-label {
@@ -181,4 +190,51 @@
 
 .editor-preview--full {
   background: var(--bg);
+}
+
+/* ── Mobile ── */
+@media (max-width: 1280px) {
+  .editor-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .editor-header-left {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+
+  .editor-title-input {
+    width: 0;
+    min-width: 0;
+    flex: 1;
+    font-size: 0.95rem;
+  }
+
+  .editor-header-actions {
+    margin-left: auto;
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .editor-toolbar {
+    padding: 0.4rem 0.8rem;
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 0;
+  }
+
+  .editor-toolbar-sep {
+    display: none;
+  }
+
+  .editor-preview {
+    padding: 1rem 1.2rem;
+  }
+
+  /* Masquer le mode Split sur petit écran */
+  .editor-mode-split {
+    display: none;
+  }
 }
