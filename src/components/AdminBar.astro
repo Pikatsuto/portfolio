@@ -9,13 +9,13 @@ interface Props {
 const { hasDraft, publishUrl } = Astro.props;
 ---
 
-<div class="admin-bar">
-  {hasDraft && <DraftBadge />}
-  {hasDraft && (
+{hasDraft && (
+  <div class="admin-bar">
+    <DraftBadge />
     <button class="publish-btn" data-publish-url={publishUrl}>Publier</button>
-  )}
-  <div class="spacer" />
-</div>
+    <div class="spacer" />
+  </div>
+)}
 
 <script is:inline>
   document.querySelectorAll(".publish-btn").forEach((btn) => {

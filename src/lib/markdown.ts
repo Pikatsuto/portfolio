@@ -69,9 +69,10 @@ export async function renderMarkdown(md: string): Promise<string> {
     renderer: {
       heading({ text, depth }) {
         const id = slugify(text);
-        if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}</h2>`;
-        if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}</h3>`;
-        return `<h${depth} id="${id}">${text}</h${depth}>`;
+        const dot = '<span class="dot">.</span>';
+        if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}${dot}</h2>`;
+        if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}${dot}</h3>`;
+        return `<h${depth} id="${id}">${text}${dot}</h${depth}>`;
       },
       code({ text, lang }) {
         // Mermaid → render as a special container for client-side rendering
