@@ -1,0 +1,142 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+// If already logged in, redirect to home
+if (Astro.locals.isAdmin) {
+  return Astro.redirect("/");
+}
+---
+
+<BaseLayout title="Login — Gabriel">
+  <div class="login-page">
+    <div class="login-card">
+      <h1 class="login-title">Connexion<span class="dot">.</span></h1>
+      <p class="login-sub">Espace administration</p>
+
+      <form id="login-form" class="login-form">
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Mot de passe"
+          class="login-input"
+          autocomplete="current-password"
+          required
+        />
+        <button type="submit" class="login-submit">Se connecter</button>
+        <p id="login-error" class="login-error" hidden>Mot de passe incorrect.</p>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+
+<script is:inline>
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const password = document.getElementById("password").value;
+    const errorEl = document.getElementById("login-error");
+    errorEl.hidden = true;
+
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    if (res.ok) {
+      window.location.href = "/";
+    } else {
+      errorEl.hidden = false;
+      document.getElementById("password").value = "";
+      document.getElementById("password").focus();
+    }
+  });
+</script>
+
+<style>
+  .login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 4rem 2rem;
+  }
+
+  .login-card {
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .login-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .login-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--tertiary);
+    margin-bottom: 2.5rem;
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .login-input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+
+  .login-input:focus {
+    border-color: var(--blue);
+  }
+
+  .login-input::placeholder {
+    color: var(--tertiary);
+  }
+
+  .login-submit {
+    width: 100%;
+    padding: 0.7rem;
+    background: var(--blue);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .login-submit:hover {
+    background: var(--blue-hover);
+  }
+
+  .login-error {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: #ef4444;
+    margin: 0;
+  }
+</style>

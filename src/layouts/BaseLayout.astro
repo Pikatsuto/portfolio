@@ -9,6 +9,8 @@ interface Props {
 
 const { title, fullHeight = false } = Astro.props;
 const currentPath = Astro.url.pathname;
+const isAdmin = Astro.locals.isAdmin;
+const maintenance = Astro.locals.maintenance;
 ---
 
 <html lang="fr">
@@ -30,7 +32,7 @@ const currentPath = Astro.url.pathname;
     </script>
   </head>
   <body style={fullHeight ? "display: flex; flex-direction: column; height: 100vh; overflow: hidden;" : ""}>
-    <Nav currentPath={currentPath} />
+    <Nav currentPath={currentPath} isAdmin={isAdmin} maintenance={maintenance} />
     <slot />
   </body>
 </html>

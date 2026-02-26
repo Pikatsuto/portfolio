@@ -3,9 +3,11 @@ import ThemeToggle from "./ThemeToggle";
 
 interface Props {
   currentPath: string;
+  isAdmin?: boolean;
+  maintenance?: boolean;
 }
 
-const { currentPath } = Astro.props;
+const { currentPath, isAdmin = false, maintenance = false } = Astro.props;
 
 const links = [
   { label: "Portfolio", href: "/" },
@@ -13,6 +15,12 @@ const links = [
   { label: "Docs", href: "/docs" },
 ];
 ---
+
+{maintenance && isAdmin && (
+  <div class="maintenance-banner">
+    🔧 Mode maintenance actif — les visiteurs voient la page de maintenance.
+  </div>
+)}
 
 <nav class="nav">
   <a href="/" class="logo">Gabriel<span class="logo-dot">.</span></a>
@@ -25,13 +33,53 @@ const links = [
         {label}
       </a>
     ))}
+    {isAdmin && (
+      <>
+        <div class="nav-divider" />
+        <a
+          href="/admin/blog"
+          class:list={["nav-link", { active: currentPath === "/admin/blog" }]}
+        >
+          Admin Blog
+        </a>
+        <a
+          href="/admin/docs"
+          class:list={["nav-link", { active: currentPath === "/admin/docs" }]}
+        >
+          Admin Docs
+        </a>
+      </>
+    )}
     <div class="nav-divider" />
     <ThemeToggle client:load />
-    <a href="/admin/login" class="login-btn">Login</a>
+    {isAdmin ? (
+      <button id="admin-btn" class="admin-btn">● Admin</button>
+    ) : (
+      <a href="/admin/login" class="login-btn">Login</a>
+    )}
   </div>
 </nav>
 
+{isAdmin && (
+  <script is:inline>
+    document.getElementById("admin-btn")?.addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    });
+  </script>
+)}
+
 <style>
+  .maintenance-banner {
+    background: rgba(245, 158, 11, 0.1);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 0.4rem 3rem;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: rgb(245, 158, 11);
+  }
+
   .nav {
     display: flex;
     align-items: center;
@@ -120,5 +168,22 @@ const links = [
   .login-btn:hover {
     border-color: var(--blue);
     color: var(--blue-hover);
+  }
+
+  .admin-btn {
+    background: color-mix(in srgb, var(--green) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--green) 27%, transparent);
+    color: var(--green);
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .admin-btn:hover {
+    background: color-mix(in srgb, var(--green) 25%, transparent);
   }
 </style>

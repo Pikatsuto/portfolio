@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// If admin, redirect to home (they bypass maintenance)
+if (Astro.locals.isAdmin) {
+  return Astro.redirect("/");
+}
+---
+
+<BaseLayout title="Maintenance — Gabriel">
+  <div class="maintenance-page">
+    <div class="maintenance-icon">🔧</div>
+    <h1 class="maintenance-title">Maintenance en cours<span class="dot">.</span></h1>
+    <p class="maintenance-text">
+      Le site est temporairement indisponible pour maintenance. Revenez bientôt !
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .maintenance-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+
+  .maintenance-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .maintenance-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 1rem;
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .maintenance-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    color: var(--secondary);
+    max-width: 480px;
+    line-height: 1.8;
+  }
+</style>
