@@ -23,6 +23,10 @@ const bio = (fm.bio as string) || "";
 const skills = (fm.skills as Array<{ name: string; details: string }>) || [];
 const projects = (fm.projects as Array<{ title: string; description: string; tags?: string[]; blog?: string; docs?: string }>) || [];
 const stats = (fm.stats as Array<{ value: string; label: string }>) || [];
+const skillsDesc = (fm.skillsDesc as string) || "";
+const projectsDesc = (fm.projectsDesc as string) || "";
+const statsDesc = (fm.statsDesc as string) || "";
+const parcoursDesc = (fm.parcoursDesc as string) || "";
 
 const bodyHtml = body ? await renderMarkdown(body) : "";
 
@@ -94,6 +98,7 @@ function renderHeadline(text: string): string {
     {skills.length > 0 && (
       <>
       <h2 class="section-title">Compétences<span class="dot">.</span></h2>
+      {skillsDesc && <p class="section-desc">{skillsDesc}</p>}
       <div class="skills">
         {skills.map((s) => (
           <div class="skill">
@@ -109,13 +114,14 @@ function renderHeadline(text: string): string {
     {projects.length > 0 && (
       <>
         <h2 class="section-title">Projets<span class="dot">.</span></h2>
+        {projectsDesc && <p class="section-desc">{projectsDesc}</p>}
         <div class="projects-list">
           {projects.map((p, i) => (
             <div class:list={["project", { clickable: !!p.blog }]}>
               <span class="project-num">{String(i + 1).padStart(2, "0")}</span>
               <div class="project-content">
                 <h3 class="project-title">
-                  {p.blog ? <a href={`/article/${p.blog}`} class="project-link">{p.title}</a> : p.title}
+                  {p.blog ? <a href={`/articles/${p.blog}`} class="project-link">{p.title}</a> : p.title}
                 </h3>
                 <p class="project-desc">{p.description}</p>
                 <div class="project-links">
@@ -137,6 +143,7 @@ function renderHeadline(text: string): string {
     {stats.length > 0 && (
       <>
       <h2 class="section-title">Chiffres clés<span class="dot">.</span></h2>
+      {statsDesc && <p class="section-desc">{statsDesc}</p>}
       <div class="stats" style={`grid-template-columns: repeat(${stats.length}, 1fr);`}>
         {stats.map((s) => (
           <div class="stat">
@@ -152,6 +159,7 @@ function renderHeadline(text: string): string {
     {bodyHtml && (
       <>
         <h2 class="section-title">Parcours<span class="dot">.</span></h2>
+        {parcoursDesc && <p class="section-desc">{parcoursDesc}</p>}
         <div class="md-body" set:html={bodyHtml} />
       </>
     )}
@@ -379,7 +387,16 @@ function renderHeadline(text: string): string {
     color: var(--white);
     text-align: center;
     margin-top: 6rem;
-    margin-bottom: 2rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .section-desc {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-size: var(--fs-sm);
+    text-align: center;
+    line-height: 1.7;
+    margin: 0 auto 2rem;
   }
 
   /* ─── Stats ─── */

@@ -491,11 +491,19 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
                 <label className="yaml-label">Bio</label>
                 <textarea value={frontmatter.bio || ""} onChange={e => updateFM("bio", e.target.value)} rows={2} className="yaml-input yaml-textarea" />
               </div>
+              <div className="yaml-full">
+                <label className="yaml-label">Description section Parcours</label>
+                <input value={(frontmatter.parcoursDesc as string) || ""} onChange={e => updateFM("parcoursDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Parcours" />
+              </div>
             </div>
           )}
 
           {yamlTab === "skills" && (
             <div>
+              <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
+                <label className="yaml-label">Description section</label>
+                <input value={(frontmatter.skillsDesc as string) || ""} onChange={e => updateFM("skillsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Compétences" />
+              </div>
               {(frontmatter.skills || []).map((s, i) => (
                 <div key={i} className="yaml-arr-row yaml-arr-row--skills">
                   <input value={s.name || ""} onChange={e => updateArr("skills", i, "name", e.target.value)} placeholder="Nom" className="yaml-input" />
@@ -509,6 +517,10 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
 
           {yamlTab === "projects" && (
             <div>
+              <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
+                <label className="yaml-label">Description section</label>
+                <input value={(frontmatter.projectsDesc as string) || ""} onChange={e => updateFM("projectsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Projets" />
+              </div>
               {(frontmatter.projects || []).map((p, i) => (
                 <div key={i} className="yaml-project-card">
                   <div className="yaml-arr-row yaml-arr-row--title">
@@ -534,6 +546,10 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
 
           {yamlTab === "stats" && (
             <div>
+              <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
+                <label className="yaml-label">Description section</label>
+                <input value={(frontmatter.statsDesc as string) || ""} onChange={e => updateFM("statsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Chiffres clés" />
+              </div>
               {(frontmatter.stats || []).map((s, i) => (
                 <div key={i} className="yaml-arr-row yaml-arr-row--stats">
                   <input value={s.value || ""} onChange={e => updateArr("stats", i, "value", e.target.value)} className="yaml-input yaml-input--value" placeholder="Valeur" />

@@ -1,10 +1,12 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { db } from "../../db";
-import { posts, categories } from "../../db/schema";
+import { posts, categories, settings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const isAdmin = Astro.locals.isAdmin;
+const articlesDescRow = await db.select().from(settings).where(eq(settings.key, "articlesDesc")).get();
+const articlesDesc = articlesDescRow?.value || "";
 
 const query = db
   .select({
@@ -32,12 +34,13 @@ const allPosts = isAdmin
   <div class="blog-list">
     <div class="blog-header">
       <h1 class="blog-title">Articles<span class="dot">.</span></h1>
-      <h2 class="blog-subtitle">Notes techniques et retours d'expérience.</h2>
+      <p class="blog-subtitle">Notes techniques et retours d'expérience.</p>
+      {articlesDesc && <p class="blog-desc">{articlesDesc}</p>}
     </div>
 
     {allPosts.map((p) => (
       <article class:list={["blog-article", { hidden: !p.visible }]}>
-        <a href={`/article/${p.id}`} class="article-link">
+        <a href={`/articles/${p.id}`} class="article-link">
           <div class="article-meta">
             <span class="article-cat">{p.cat}</span>
             <span class="meta-dot" />
@@ -81,6 +84,15 @@ const allPosts = isAdmin
     font-family: 'DM Sans', sans-serif;
     color: var(--secondary);
     font-size: var(--fs-body);
+    margin-bottom: 0.8rem;
+  }
+
+  .blog-desc {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+    max-width: 700px;
   }
 
   .blog-article {

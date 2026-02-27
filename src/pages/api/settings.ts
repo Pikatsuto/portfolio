@@ -18,16 +18,24 @@ export const GET: APIRoute = async ({ request }) => {
 };
 
 export const PUT: APIRoute = async ({ request }) => {
-  const body = (await request.json()) as { maintenance?: boolean };
+  const body = (await request.json()) as Record<string, unknown>;
 
-  if (body.maintenance !== undefined) {
-    await db
-      .insert(settings)
-      .values({ key: "maintenance", value: body.maintenance ? "true" : "false" })
-      .onConflictDoUpdate({
-        target: settings.key,
-        set: { value: body.maintenance ? "true" : "false" },
-      });
+  // Allowed settings keys
+  const allowedKeys = ["maintenance", "articlesDesc", "docsDesc"];
+
+  for (const key of allowedKeys) {
+    if (body[key] !== undefined) {
+      const value = key === "maintenance"
+        ? (body[key] ? "true" : "false")
+        : String(body[key]);
+      await db
+        .insert(settings)
+        .values({ key, value })
+        .onConflictDoUpdate({
+          target: settings.key,
+          set: { value },
+        });
+    }
   }
 
   return new Response(JSON.stringify({ ok: true }), {

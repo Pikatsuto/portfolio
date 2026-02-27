@@ -22,6 +22,7 @@ role: SysAdmin / DevOps / Full-Stack
 headline: "Construire, *automatiser*, déployer."
 bio: "Je crée des infrastructures self-hosted et des outils que j'utilise au quotidien. Chaque projet résout un vrai problème."
 
+skillsDesc: "Les domaines techniques sur lesquels j'interviens au quotidien, de l'infrastructure à la livraison applicative."
 skills:
   - name: Linux
     details: Debian · Ubuntu · Arch
@@ -32,6 +33,7 @@ skills:
   - name: Infra
     details: Nginx · CI/CD · ZFS
 
+projectsDesc: "Une sélection de projets personnels et professionnels, avec articles détaillés et documentation technique pour chacun."
 projects:
   - title: uni-dash
     description: Orchestration cloud self-hosted avec monitoring intégré et interface de gestion complète
@@ -52,6 +54,7 @@ projects:
     blog: docker-compose-quit
     docs: isol-app
 
+statsDesc: "Quelques indicateurs qui résument mon activité et ma fiabilité en production."
 stats:
   - value: 5+
     label: Années XP
@@ -61,6 +64,8 @@ stats:
     label: Uptime
   - value: ∞
     label: Café
+
+parcoursDesc: "Mon parcours, ma philosophie technique et mes disponibilités."
 ---
 
 ## À propos
@@ -758,7 +763,13 @@ console.log(`  Docs: ${defaultDocs.length} rows`);
 db.insert(schema.settings)
   .values({ key: "maintenance", value: "false" })
   .run();
-console.log("  Settings: 1 row");
+db.insert(schema.settings)
+  .values({ key: "articlesDesc", value: "Retours d'expérience, analyses et guides pratiques autour du DevOps, de l'administration système et du développement web. Chaque article détaille un problème rencontré en production, une architecture mise en place ou un outil évalué sur le terrain." })
+  .run();
+db.insert(schema.settings)
+  .values({ key: "docsDesc", value: "Chaque projet dispose de sa propre documentation technique : guides d'installation, architecture, configuration et références d'API. Ces documentations sont rédigées à partir de l'expérience acquise en production." })
+  .run();
+console.log("  Settings: 3 rows");
 
 console.log("Seed complete!");
 sqlite.close();

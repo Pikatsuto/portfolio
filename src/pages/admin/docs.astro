@@ -5,7 +5,7 @@ import ConfirmModal from "../../components/ConfirmModal.astro";
 import VisToggle from "../../components/VisToggle";
 import GitHistory from "../../components/GitHistory";
 import { db } from "../../db";
-import { docs, docHistory, sections, projects } from "../../db/schema";
+import { docs, docHistory, sections, projects, settings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 // All projects
@@ -80,6 +80,8 @@ const docsWithHistory = await Promise.all(
 const docMap = new Map(docsWithHistory.map((d) => [d.id, d]));
 const visibleCount = allDocs.filter((d) => d.visible).length;
 const sectionNames = [...sectionMap.keys()];
+const docsDescRow = await db.select().from(settings).where(eq(settings.key, "docsDesc")).get();
+const docsDesc = docsDescRow?.value || "";
 ---
 
 <BaseLayout title="Admin Documentation — Gabriel Guillou" noindex>
@@ -91,6 +93,12 @@ const sectionNames = [...sectionMap.keys()];
           <p class="admin-stats">{allDocs.length} pages · {sectionNames.length} sections · {visibleCount} publiées</p>
         </div>
         <button id="new-project-btn" class="new-btn">+ Projet</button>
+      </div>
+
+      <div class="desc-field">
+        <label class="desc-label" for="docs-desc">Description page docs</label>
+        <input type="text" id="docs-desc" class="desc-input" value={docsDesc} />
+        <button id="save-docs-desc" class="desc-save">Enregistrer</button>
       </div>
 
       <!-- Project tabs -->
@@ -155,6 +163,21 @@ const sectionNames = [...sectionMap.keys()];
 </BaseLayout>
 
 <script is:inline>
+  // Save docs description
+  document.getElementById("save-docs-desc")?.addEventListener("click", async () => {
+    const val = document.getElementById("docs-desc").value;
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ docsDesc: val }),
+    });
+    if (res.ok) {
+      const btn = document.getElementById("save-docs-desc");
+      btn.textContent = "Enregistré";
+      setTimeout(() => { btn.textContent = "Enregistrer"; }, 1500);
+    }
+  });
+
   // New project
   document.getElementById("new-project-btn")?.addEventListener("click", async () => {
     const name = await window.__promptModal("Nom du nouveau projet :");
@@ -384,6 +407,57 @@ const sectionNames = [...sectionMap.keys()];
     color: var(--tertiary);
     font-size: var(--fs-sm);
     margin-top: 0.3rem;
+  }
+
+  .desc-field {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .desc-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .desc-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--body);
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+  }
+
+  .desc-input:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+
+  .desc-save {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+
+  .desc-save:hover {
+    background: color-mix(in srgb, var(--blue) 8%, transparent);
+    border-color: color-mix(in srgb, var(--blue) 27%, transparent);
+    color: var(--blue-hover);
   }
 
   .new-btn {

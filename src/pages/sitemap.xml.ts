@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ site }) => {
   // Static pages
   const staticPages = [
     { url: "/", priority: "1.0", changefreq: "monthly" },
-    { url: "/article", priority: "0.8", changefreq: "weekly" },
+    { url: "/articles", priority: "0.8", changefreq: "weekly" },
     { url: "/docs", priority: "0.7", changefreq: "monthly" },
   ];
 
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ site }) => {
     ),
     ...allPosts.map(
       (p) =>
-        `  <url>\n    <loc>${base}/article/${p.id}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`,
+        `  <url>\n    <loc>${base}/articles/${p.id}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`,
     ),
     ...allDocs.map(
       (d) =>
