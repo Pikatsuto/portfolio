@@ -12,6 +12,15 @@ services:
       - "4321"
     labels:
       - traefik.http.services.app.loadbalancer.server.port=4321
+      # Security headers middleware (covers static + dynamic responses)
+      - traefik.http.routers.app.middlewares=app-headers
+      - traefik.http.middlewares.app-headers.headers.stsSeconds=63072000
+      - traefik.http.middlewares.app-headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.app-headers.headers.stsPreload=true
+      - traefik.http.middlewares.app-headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.app-headers.headers.frameDeny=true
+      - traefik.http.middlewares.app-headers.headers.referrerPolicy=strict-origin-when-cross-origin
+      - traefik.http.middlewares.app-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'
 
 volumes:
   db-data:
