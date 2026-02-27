@@ -207,7 +207,7 @@ const defaultDocs = [
 ## Installation rapide
 
 \`\`\`bash
-git clone https://github.com/gabmusic/unidash.git
+git clone https://github.com/Pikatsuto/unidash.git
 cd unidash && ./install.sh --production
 \`\`\`
 
@@ -456,7 +456,7 @@ WEBAUTHN_RP_ID=media.example.com
 ## Installation
 
 \`\`\`bash
-git clone https://github.com/gabmusic/isolapp.git
+git clone https://github.com/Pikatsuto/isolapp.git
 cd isolapp && make install
 \`\`\``,
   },

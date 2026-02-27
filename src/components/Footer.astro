@@ -1,0 +1,83 @@
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      <span class="footer-copy">&copy; {new Date().getFullYear()} Gabriel Guillou</span>
+      <span class="footer-a11y">WCAG AA</span>
+    </div>
+    <nav class="footer-links">
+      <a href="/contact" class="footer-link">Contact</a>
+      <a href="https://github.com/Pikatsuto" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+      <a href="https://www.linkedin.com/in/gabriel-guillou-a56bb4237/" target="_blank" rel="noopener noreferrer" class="footer-link">LinkedIn</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    padding: 2rem 3rem;
+  }
+
+  .footer-inner {
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .footer-copy {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+  }
+
+  .footer-a11y {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xxs);
+    color: var(--tertiary);
+    border: 1px solid var(--line);
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+  }
+
+  .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .footer-link {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover {
+    color: var(--blue);
+  }
+
+  @media (max-width: 1280px) {
+    .footer {
+      padding: 2rem 1.2rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .footer-inner {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+  }
+</style>

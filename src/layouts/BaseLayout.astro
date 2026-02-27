@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
 import { db } from "../db";
 import { posts, categories } from "../db/schema";
 import { eq } from "drizzle-orm";
@@ -61,5 +62,6 @@ const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
   <body style={fullHeight ? "display: flex; flex-direction: column; height: 100vh; overflow: hidden;" : ""}>
     <Nav currentPath={currentPath} isAdmin={isAdmin} maintenance={maintenance} searchPosts={searchPostsSafe} />
     <slot />
+    {!fullHeight && <Footer />}
   </body>
 </html>
