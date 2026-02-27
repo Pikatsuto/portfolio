@@ -317,7 +317,7 @@ export default function GlobalSearch({ posts }: Props) {
                   <div
                     style={{
                       padding: "0.5rem 1rem 0.3rem",
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Source Serif 4', serif",
                       fontSize: "0.72rem",
                       fontWeight: 600,
                       color: "var(--tertiary)",
@@ -354,7 +354,7 @@ export default function GlobalSearch({ posts }: Props) {
                   <div
                     style={{
                       padding: "0.5rem 1rem 0.3rem",
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Source Serif 4', serif",
                       fontSize: "0.72rem",
                       fontWeight: 600,
                       color: "var(--tertiary)",
