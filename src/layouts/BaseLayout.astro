@@ -43,12 +43,21 @@ const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={new URL("/og-image.png", Astro.site).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL("/og-image.png", Astro.site).href} />
     <link rel="canonical" href={canonicalUrl} />
+    <link rel="preload" as="font" href="/fonts/source-serif-4-latin.woff2" type="font/woff2" crossorigin />
+    <link rel="preload" as="font" href="/fonts/dm-sans-latin.woff2" type="font/woff2" crossorigin />
     <script is:inline>
       (function() {
         var t = localStorage.getItem("theme");

@@ -71,6 +71,17 @@ const toc = extractTOC(displayContent);
 const projectFirstDoc = projectDocs.sort((a, b) => a.sectionSort - b.sectionSort || a.sortOrder - b.sortOrder)[0];
 // First doc in the active section (for breadcrumb link)
 const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section);
+
+const base = Astro.site?.href.replace(/\/$/, "") || "https://gabriel-guillou.fr";
+const breadcrumbLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Documentation", item: `${base}/docs` },
+    { "@type": "ListItem", position: 2, name: proj.displayName || proj.name, item: `${base}/docs/${project}/${projectFirstDoc.id}` },
+    { "@type": "ListItem", position: 3, name: activeDoc.title, item: `${base}/docs/${project}/${activeDoc.id}` },
+  ],
+});
 ---
 
 <BaseLayout title={`${activeDoc.title} — Documentation ${proj.displayName || proj.name}`} description={`${activeDoc.title} — Documentation technique du projet ${proj.displayName || proj.name}. Guide et référence par Gabriel Guillou.`} fullHeight>
@@ -130,6 +141,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
   </div>
   {isAdmin && <EditButton href={`/admin/docs-edit?id=${activeDoc.id}`} />}
   <MermaidInit />
+  <script type="application/ld+json" set:html={breadcrumbLd} />
 </BaseLayout>
 
 <script is:inline>

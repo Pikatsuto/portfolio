@@ -53,6 +53,22 @@ if (post.docProject) {
     if (firstDoc) docProjectUrl = `/docs/${post.docProject}/${firstDoc.id}`;
   }
 }
+const blogPostingLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title,
+  description: post.excerpt || "",
+  datePublished: post.date || "",
+  author: {
+    "@type": "Person",
+    name: "Gabriel Guillou",
+    url: Astro.site?.href || "https://gabriel-guillou.fr",
+  },
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": new URL(`/article/${post.id}`, Astro.site).href,
+  },
+});
 ---
 
 <BaseLayout title={`${post.title} — Gabriel Guillou`} description={post.excerpt || `Article technique : ${post.title}. Par Gabriel Guillou.`}>
@@ -93,6 +109,7 @@ if (post.docProject) {
   </div>
   {isAdmin && <EditButton href={`/admin/blog-edit?id=${post.id}`} />}
   <MermaidInit />
+  <script type="application/ld+json" set:html={blogPostingLd} />
 </BaseLayout>
 
 <style>

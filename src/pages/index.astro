@@ -26,6 +26,27 @@ const stats = (fm.stats as Array<{ value: string; label: string }>) || [];
 
 const bodyHtml = body ? await renderMarkdown(body) : "";
 
+const jsonLd = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Gabriel Guillou",
+    url: Astro.site?.href || "https://gabriel-guillou.fr",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    url: Astro.site?.href || "https://gabriel-guillou.fr",
+    jobTitle: role,
+    description: bio,
+    sameAs: [
+      "https://github.com/Pikatsuto",
+      "https://www.linkedin.com/in/gabriel-guillou-a56bb4237/",
+    ],
+  },
+]);
+
 // Build a map of project name → first doc page URL (to avoid 3xx redirects)
 const docsFirstPageMap = new Map<string, string>();
 const docProjectNames = projects.filter((p) => p.docs).map((p) => p.docs!);
@@ -137,6 +158,7 @@ function renderHeadline(text: string): string {
   </div>
   {isAdmin && <EditButton href="/admin/portfolio" />}
   <ConfirmModal />
+  <script type="application/ld+json" set:html={jsonLd} />
 </BaseLayout>
 
 <style>
