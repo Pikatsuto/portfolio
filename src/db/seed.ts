@@ -507,6 +507,7 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL DEFAULT '',
     description TEXT,
     visible INTEGER NOT NULL DEFAULT 1,
     sort_order INTEGER NOT NULL DEFAULT 0,
@@ -629,11 +630,18 @@ const categoryRows = db.select().from(schema.categories).all();
 const catIdMap = new Map(categoryRows.map((c) => [c.name, c.id]));
 
 // Insert projects (deduplicate from docs + posts.docProject)
+const projectDisplayNames: Record<string, string> = {
+  "uni-dash": "UniDash",
+  "astral-emu": "AstralEmu",
+  "centrarr": "Centrarr",
+  "isol-app": "IsolApp",
+};
 const projectNames = [...new Set(defaultDocs.map((d) => d.project))];
 for (let i = 0; i < projectNames.length; i++) {
   db.insert(schema.projects)
     .values({
       name: projectNames[i],
+      displayName: projectDisplayNames[projectNames[i]] || projectNames[i],
       visible: true,
       sortOrder: i,
       createdAt: now,

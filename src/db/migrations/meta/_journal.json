@@ -15,6 +15,13 @@
       "when": 1772199487382,
       "tag": "0001_dry_marten_broadcloak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772207326755,
+      "tag": "0002_warm_queen_noir",
+      "breakpoints": true
     }
   ]
 }

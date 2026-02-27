@@ -14,6 +14,7 @@ export const categories = sqliteTable("categories", {
 export const projects = sqliteTable("projects", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
+  displayName: text("display_name").notNull().default(""),
   description: text("description"),
   visible: integer("visible", { mode: "boolean" }).notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),

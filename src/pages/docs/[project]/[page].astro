@@ -71,12 +71,12 @@ const toc = extractTOC(displayContent);
 const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section);
 ---
 
-<BaseLayout title={`${activeDoc.title} — ${project} Docs`} fullHeight>
+<BaseLayout title={`${activeDoc.title} — ${proj.displayName || proj.name} Docs`} fullHeight>
   <div class="docs-reader">
     <!-- Left sidebar -->
     <aside class="sidebar">
       <a href="/docs" class="back-link"><Icon name="arrow-left" size={14} /> Tous les projets</a>
-      <div class="sidebar-title">{project}</div>
+      <div class="sidebar-title">{proj.displayName || proj.name}</div>
       {orderedSections.map((s) => (
         <div class="sidebar-section">
           <div class="section-title">{s.title}</div>
@@ -102,7 +102,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     <!-- Main content -->
     <main class="doc-content">
       <div class="breadcrumb">
-        <a href={`/docs/${project}`} class="bc-item bc-link">{project}</a>
+        <a href={`/docs/${project}`} class="bc-item bc-link">{proj.displayName || proj.name}</a>
         <Icon name="chevron-right" size={12} class="bc-sep" />
         <a href={`/docs/${project}/${sectionFirstDoc?.id ?? pageSlug}`} class="bc-item bc-link">{activeDoc.section}</a>
         <Icon name="chevron-right" size={12} class="bc-sep" />

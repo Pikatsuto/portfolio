@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 // All projects
 const allProjectRows = await db.select().from(projects).orderBy(projects.sortOrder).all();
 const allProjectNames = allProjectRows.map((p) => p.name);
+const projDisplayMap = new Map(allProjectRows.map((p) => [p.name, p.displayName || p.name]));
 
 // Active project from query param or first
 const activeProject = Astro.url.searchParams.get("project") || allProjectNames[0] || "";
@@ -99,7 +100,7 @@ const sectionNames = [...sectionMap.keys()];
             href={`/admin/docs?project=${encodeURIComponent(proj)}`}
             class:list={["project-tab", { active: proj === activeProject }]}
           >
-            {proj}
+            {projDisplayMap.get(proj) || proj}
             <span class="tab-count">{projectDocCounts.get(proj) || 0}</span>
           </a>
         ))}

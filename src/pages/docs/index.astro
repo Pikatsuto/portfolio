@@ -19,6 +19,7 @@ const projectStats = await Promise.all(
     const sectionSet = new Set(visibleDocs.map((d) => d.sectionId));
     return {
       name: proj.name,
+      displayName: proj.displayName || proj.name,
       count: visibleDocs.length,
       sectionCount: sectionSet.size,
       firstId: visibleDocs[0]?.id,
@@ -37,7 +38,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
     <div class="project-grid">
       {projectsList.map((proj) => (
         <a href={`/docs/${proj.name}/${proj.firstId}`} class="project-card">
-          <h2 class="project-name">{proj.name}</h2>
+          <h2 class="project-name">{proj.displayName}</h2>
           <p class="project-info">{proj.count} pages · {proj.sectionCount} sections</p>
         </a>
       ))}
