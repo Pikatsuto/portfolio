@@ -5,7 +5,7 @@ import EditButton from "../../components/EditButton.astro";
 import Icon from "../../components/Icon.astro";
 import MermaidInit from "../../components/MermaidInit.astro";
 import { db } from "../../db";
-import { posts, categories, projects } from "../../db/schema";
+import { posts, categories, projects, docs, sections } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../lib/markdown";
 
@@ -37,9 +37,25 @@ if (!post || (!post.visible && !isAdmin)) {
 const displayContent = isAdmin && post.draft ? post.draft : post.content;
 const contentHtml = await renderMarkdown(displayContent);
 const toc = extractTOC(displayContent);
+
+// Resolve doc project first page URL to avoid 3xx redirect
+let docProjectUrl = post.docProject ? `/docs/${post.docProject}` : "";
+if (post.docProject) {
+  const proj = await db.select({ id: projects.id }).from(projects).where(eq(projects.name, post.docProject)).get();
+  if (proj) {
+    const firstDoc = await db
+      .select({ id: docs.id })
+      .from(docs)
+      .innerJoin(sections, eq(docs.sectionId, sections.id))
+      .where(eq(sections.projectId, proj.id))
+      .orderBy(sections.sortOrder, docs.sortOrder)
+      .get();
+    if (firstDoc) docProjectUrl = `/docs/${post.docProject}/${firstDoc.id}`;
+  }
+}
 ---
 
-<BaseLayout title={`${post.title} — Gabriel Guillou`}>
+<BaseLayout title={`${post.title} — Blog de Gabriel Guillou`} description={post.excerpt || `Article technique : ${post.title}. Par Gabriel Guillou.`}>
   <div class="article-page">
     <a href="/blog" class="back-btn"><Icon name="arrow-left" size={14} /> Retour</a>
 
@@ -52,7 +68,7 @@ const toc = extractTOC(displayContent);
       <h1 class="article-title">{post.title}</h1>
       <p class="article-excerpt">{post.excerpt}</p>
       {post.docProject && (
-        <a href={`/docs/${post.docProject}`} class="doc-link-btn">
+        <a href={docProjectUrl} class="doc-link-btn">
           Documentation {post.docProject} <Icon name="arrow-right" size={14} />
         </a>
       )}

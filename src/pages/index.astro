@@ -5,7 +5,8 @@ import DraftBadge from "../components/DraftBadge.astro";
 import EditButton from "../components/EditButton.astro";
 import GitHistory from "../components/GitHistory";
 import { db } from "../db";
-import { portfolio, portfolioHistory } from "../db/schema";
+import { portfolio, portfolioHistory, projects as projectsTable, docs, sections } from "../db/schema";
+import { eq } from "drizzle-orm";
 import { parseMDX, renderMarkdown } from "../lib/markdown";
 
 const isAdmin = Astro.locals.isAdmin;
@@ -25,13 +26,29 @@ const stats = (fm.stats as Array<{ value: string; label: string }>) || [];
 
 const bodyHtml = body ? await renderMarkdown(body) : "";
 
+// Build a map of project name → first doc page URL (to avoid 3xx redirects)
+const docsFirstPageMap = new Map<string, string>();
+const docProjectNames = projects.filter((p) => p.docs).map((p) => p.docs!);
+for (const projName of docProjectNames) {
+  const proj = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.name, projName)).get();
+  if (!proj) continue;
+  const firstDoc = await db
+    .select({ id: docs.id })
+    .from(docs)
+    .innerJoin(sections, eq(docs.sectionId, sections.id))
+    .where(eq(sections.projectId, proj.id))
+    .orderBy(sections.sortOrder, docs.sortOrder)
+    .get();
+  if (firstDoc) docsFirstPageMap.set(projName, `/docs/${projName}/${firstDoc.id}`);
+}
+
 // Render headline with *italic* → <em class="hl-accent">
 function renderHeadline(text: string): string {
   return text.replace(/\*([^*]+)\*/g, '<em class="hl-accent">$1</em>');
 }
 ---
 
-<BaseLayout title={`${name} — Portfolio`}>
+<BaseLayout title={`${name} — Portfolio DevOps, Sysadmin & Full-Stack`} description={`Portfolio de ${name} : ${role}. Projets, compétences techniques et retours d'expérience en administration système, DevOps et développement web.`}>
   {isAdmin && (hasDraft || history.length > 0) && (
     <div class="portfolio-draft-bar">
       {hasDraft && <DraftBadge />}
@@ -82,7 +99,7 @@ function renderHeadline(text: string): string {
                 </h3>
                 <p class="project-desc">{p.description}</p>
                 <div class="project-links">
-                  {p.docs && <a href={`/docs/${p.docs}`} class="docs-btn">{p.docs && "Docs"}</a>}
+                  {p.docs && <a href={docsFirstPageMap.get(p.docs) || `/docs/${p.docs}`} class="docs-btn">Docs</a>}
                 </div>
               </div>
               <div class="project-tags">

@@ -67,11 +67,13 @@ const displayContent = isAdmin && activeDoc.draft ? activeDoc.draft : activeDoc.
 const contentHtml = await renderMarkdown(displayContent);
 const toc = extractTOC(displayContent);
 
+// First doc of the project (for breadcrumb project link — avoids 3xx redirect)
+const projectFirstDoc = projectDocs.sort((a, b) => a.sectionSort - b.sectionSort || a.sortOrder - b.sortOrder)[0];
 // First doc in the active section (for breadcrumb link)
 const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section);
 ---
 
-<BaseLayout title={`${activeDoc.title} — ${proj.displayName || proj.name} Docs`} fullHeight>
+<BaseLayout title={`${activeDoc.title} — Documentation ${proj.displayName || proj.name}`} description={`${activeDoc.title} — Documentation technique du projet ${proj.displayName || proj.name}. Guide et référence par Gabriel Guillou.`} fullHeight>
   <div class="docs-reader">
     <!-- Left sidebar -->
     <aside class="sidebar">
@@ -102,7 +104,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     <!-- Main content -->
     <main class="doc-content">
       <div class="breadcrumb">
-        <a href={`/docs/${project}`} class="bc-item bc-link">{proj.displayName || proj.name}</a>
+        <a href={`/docs/${project}/${projectFirstDoc.id}`} class="bc-item bc-link">{proj.displayName || proj.name}</a>
         <Icon name="chevron-right" size={12} class="bc-sep" />
         <a href={`/docs/${project}/${sectionFirstDoc?.id ?? pageSlug}`} class="bc-item bc-link">{activeDoc.section}</a>
         <Icon name="chevron-right" size={12} class="bc-sep" />

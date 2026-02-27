@@ -70,9 +70,12 @@ export async function renderMarkdown(md: string): Promise<string> {
       heading({ text, depth }) {
         const id = slugify(text);
         const dot = '<span class="dot">.</span>';
-        if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}${dot}</h2>`;
-        if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}${dot}</h3>`;
-        return `<h${depth} id="${id}">${text}${dot}</h${depth}>`;
+        // Demote all headings by 1 level: # → h2, ## → h3, etc.
+        // Pages already have their own <h1>, so markdown # must not create a second one.
+        const level = Math.min(depth + 1, 6);
+        if (level === 2) return `<h2 class="md-h2" id="${id}">${text}${dot}</h2>`;
+        if (level === 3) return `<h3 class="md-h3" id="${id}">${text}${dot}</h3>`;
+        return `<h${level} id="${id}">${text}${dot}</h${level}>`;
       },
       code({ text, lang }) {
         // Mermaid → render as a special container for client-side rendering
@@ -121,9 +124,9 @@ export function extractTOC(md: string): TOCEntry[] {
   if (!md) return [];
   return md
     .split("\n")
-    .filter((l) => l.startsWith("## "))
+    .filter((l) => l.startsWith("# ") || l.startsWith("## "))
     .map((l) => {
-      const text = l.slice(3);
+      const text = l.startsWith("## ") ? l.slice(3) : l.slice(2);
       return { text, slug: slugify(text) };
     });
 }
