@@ -30,6 +30,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <textarea id="message" name="message" class="form-input form-textarea" rows="6" required></textarea>
         </div>
 
+        <!-- Honeypot — invisible to humans, bots fill it -->
+        <div class="form-group" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;tab-index:-1;">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <input type="hidden" id="form-ts" value="" />
+
         <button type="submit" id="submit-btn" class="submit-btn">
           <span id="submit-label">Envoyer</span>
         </button>
@@ -47,6 +55,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     var form = document.getElementById("contact-form");
     var errorEl = document.getElementById("contact-error");
     var successEl = document.getElementById("contact-success");
+
+    // Record page load timestamp for timing check
+    document.getElementById("form-ts").value = String(Date.now());
 
     // SHA-256 via Web Crypto API
     async function sha256(str) {
@@ -114,6 +125,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             email: document.getElementById("email").value,
             subject: document.getElementById("subject").value,
             message: document.getElementById("message").value,
+            website: document.getElementById("website").value,
+            ts: document.getElementById("form-ts").value,
             salt: powData.salt,
             number: powData.number,
             signature: powData.signature,
