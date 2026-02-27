@@ -310,8 +310,9 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
   /* ─── Right TOC ─── */
   .toc-sidebar {
     border-left: 1px solid var(--line);
-    padding: 3rem 1.2rem;
+    padding: 3rem 3rem 3rem 1.2rem;
     overflow-y: auto;
+    text-align: right;
   }
 
   .toc-title {
@@ -331,8 +332,8 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
     margin-bottom: 0.6rem;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    padding-left: 0.8rem;
-    border-left: 1px solid transparent;
+    padding-right: 0.8rem;
+    border-right: 1px solid transparent;
     text-decoration: none;
     transition: color 0.2s;
   }
@@ -343,7 +344,7 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .toc-item.active {
     color: var(--blue-hover);
-    border-left-color: var(--blue);
+    border-right-color: var(--blue);
   }
 
   /* md-body styles are in global.css — only override font-size for docs */
@@ -386,6 +387,17 @@ const sectionFirstDoc = projectDocs.find((d) => d.section === activeDoc.section)
 
   .sidebar-overlay.open {
     display: block;
+  }
+
+  /* ─── Nav breakpoint: align sidebars with nav padding ─── */
+  @media (max-width: 1280px) {
+    .sidebar {
+      padding-left: 1.2rem;
+    }
+
+    .toc-sidebar {
+      padding-right: 1.2rem;
+    }
   }
 
   /* ─── Tablet: hide TOC, 2 columns ─── */
