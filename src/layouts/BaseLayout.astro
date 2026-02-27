@@ -14,6 +14,7 @@ interface Props {
 
 const { title, description = "Portfolio de Gabriel Guillou — DevOps, Sysadmin, Full-Stack", fullHeight = false } = Astro.props;
 const currentPath = Astro.url.pathname;
+const canonicalUrl = new URL(currentPath, Astro.site).href;
 const isAdmin = Astro.locals.isAdmin;
 const maintenance = Astro.locals.maintenance;
 
@@ -44,8 +45,8 @@ const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={Astro.url.href} />
-    <link rel="canonical" href={Astro.url.href} />
+    <meta property="og:url" content={canonicalUrl} />
+    <link rel="canonical" href={canonicalUrl} />
     <script is:inline>
       (function() {
         var t = localStorage.getItem("theme");
