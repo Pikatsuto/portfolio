@@ -485,10 +485,10 @@ cd isolapp && make install
 // ─── Section order per project (canonical) ───
 
 const sectionOrders: Record<string, string[]> = {
-  uni-dash: ["Démarrage", "Architecture", "API Reference", "Guides avancés"],
-  astral-emu: ["Démarrage", "Architecture", "Personnalisation"],
-  centrarr: ["Démarrage", "Authentification"],
-  isol-app: ["Démarrage", "Architecture"],
+  "uni-dash": ["Démarrage", "Architecture", "API Reference", "Guides avancés"],
+  "astral-emu": ["Démarrage", "Architecture", "Personnalisation"],
+  "centrarr": ["Démarrage", "Authentification"],
+  "isol-app": ["Démarrage", "Architecture"],
 };
 
 // ─── Seed execution ───
