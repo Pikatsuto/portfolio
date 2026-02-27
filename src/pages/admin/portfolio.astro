@@ -8,7 +8,7 @@ const row = await db.select().from(portfolio).get();
 const content = row?.draft || row?.content || "";
 ---
 
-<BaseLayout title="Éditer — Portfolio" fullHeight>
+<BaseLayout title="Éditer — Portfolio" fullHeight noindex>
   <PortfolioEditor
     client:only="react"
     content={content}

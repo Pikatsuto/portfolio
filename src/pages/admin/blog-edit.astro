@@ -14,7 +14,7 @@ if (!post) return Astro.redirect("/admin/blog");
 const content = post.draft || post.content;
 ---
 
-<BaseLayout title={`Éditer — ${post.title}`} fullHeight>
+<BaseLayout title={`Éditer — ${post.title}`} fullHeight noindex>
   <Editor
     client:only="react"
     content={content}

@@ -27,7 +27,7 @@ const date = new Date(msg.createdAt).toLocaleDateString("fr-FR", {
 });
 ---
 
-<BaseLayout title={`${msg.subject} — Messages`}>
+<BaseLayout title={`${msg.subject} — Messages`} noindex>
   <div class="msg-page">
     <div class="msg-inner">
       <a href="/admin/messages" class="back-link">

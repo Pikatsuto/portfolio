@@ -38,7 +38,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
     <div class="project-grid">
       {projectsList.map((proj) => (
         <a href={`/docs/${proj.name}/${proj.firstId}`} class="project-card">
-          <h2 class="project-name">{proj.displayName}</h2>
+          <h3 class="project-name">{proj.displayName}</h3>
           <p class="project-info">{proj.count} pages · {proj.sectionCount} sections</p>
         </a>
       ))}

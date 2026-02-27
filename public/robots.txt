@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /_astro/
+
+Sitemap: https://gabriel-guillou.fr/sitemap.xml

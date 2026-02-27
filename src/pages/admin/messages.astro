@@ -9,7 +9,7 @@ const allMessages = await db.select().from(messages).orderBy(desc(messages.creat
 const unreadCount = allMessages.filter((m) => !m.read).length;
 ---
 
-<BaseLayout title="Messages — Gabriel Guillou">
+<BaseLayout title="Messages — Gabriel Guillou" noindex>
   <div class="admin-page">
     <div class="admin-inner">
       <div class="admin-header">

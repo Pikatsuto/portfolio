@@ -48,7 +48,7 @@ function renderHeadline(text: string): string {
 }
 ---
 
-<BaseLayout title={`${name} — Portfolio DevOps, Sysadmin & Full-Stack`} description={`Portfolio de ${name} : ${role}. Projets, compétences techniques et retours d'expérience en administration système, DevOps et développement web.`}>
+<BaseLayout title={`${name} — Portfolio DevOps, Sysadmin & Full-Stack`} description={`Portfolio de ${name}, ${role}. Projets, compétences et retours d'expérience en DevOps et développement web.`}>
   {isAdmin && (hasDraft || history.length > 0) && (
     <div class="portfolio-draft-bar">
       {hasDraft && <DraftBadge />}
