@@ -71,8 +71,9 @@ function renderHeadline(text: string): string {
 
     <!-- Skills -->
     {skills.length > 0 && (
+      <>
+      <h2 class="section-title">Compétences<span class="dot">.</span></h2>
       <div class="skills">
-        <h2 class="sr-only">Compétences</h2>
         {skills.map((s) => (
           <div class="skill">
             <div class="skill-name">{s.name}</div>
@@ -80,22 +81,20 @@ function renderHeadline(text: string): string {
           </div>
         ))}
       </div>
+      </>
     )}
 
     <!-- Projects -->
     {projects.length > 0 && (
       <>
-        <div class="projects-header">
-          <h2 class="projects-title">Projets<span class="dot">.</span></h2>
-          <span class="projects-count">{projects.length} projets</span>
-        </div>
+        <h2 class="section-title">Projets<span class="dot">.</span></h2>
         <div class="projects-list">
           {projects.map((p, i) => (
             <div class:list={["project", { clickable: !!p.blog }]}>
               <span class="project-num">{String(i + 1).padStart(2, "0")}</span>
               <div class="project-content">
                 <h3 class="project-title">
-                  {p.blog ? <a href={`/blog/${p.blog}`} class="project-link">{p.title}</a> : p.title}
+                  {p.blog ? <a href={`/article/${p.blog}`} class="project-link">{p.title}</a> : p.title}
                 </h3>
                 <p class="project-desc">{p.description}</p>
                 <div class="project-links">
@@ -115,8 +114,9 @@ function renderHeadline(text: string): string {
 
     <!-- Stats -->
     {stats.length > 0 && (
+      <>
+      <h2 class="section-title">Chiffres clés<span class="dot">.</span></h2>
       <div class="stats" style={`grid-template-columns: repeat(${stats.length}, 1fr);`}>
-        <h2 class="sr-only">Chiffres clés</h2>
         {stats.map((s) => (
           <div class="stat">
             <div class="stat-value">{s.value}</div>
@@ -124,12 +124,13 @@ function renderHeadline(text: string): string {
           </div>
         ))}
       </div>
+      </>
     )}
 
     <!-- MDX Body -->
     {bodyHtml && (
       <>
-        <h2 class="sr-only">Présentation</h2>
+        <h2 class="section-title">Parcours<span class="dot">.</span></h2>
         <div class="md-body" set:html={bodyHtml} />
       </>
     )}
@@ -229,28 +230,8 @@ function renderHeadline(text: string): string {
   }
 
   /* ─── Projects ─── */
-  .projects-header {
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .projects-title {
-    font-family: 'Playfair Display', serif;
-    font-size: var(--fs-h2);
-    font-weight: 700;
-    color: var(--white);
-  }
-
   .dot {
     color: var(--blue);
-  }
-
-  .projects-count {
-    font-family: 'DM Sans', sans-serif;
-    font-size: var(--fs-xs);
-    color: var(--tertiary);
   }
 
   .projects-list {
@@ -367,13 +348,25 @@ function renderHeadline(text: string): string {
     border-radius: 20px;
   }
 
+  /* ─── Section titles ─── */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    color: var(--white);
+    text-align: center;
+    margin-top: 6rem;
+    margin-bottom: 2rem;
+  }
+
   /* ─── Stats ─── */
   .stats {
-    margin-top: 4rem;
     display: grid;
     gap: 2rem;
-    padding: 2.5rem 0;
     text-align: center;
+    margin-top: -0.8rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--line);
   }
 
   .stat-value {
@@ -381,6 +374,7 @@ function renderHeadline(text: string): string {
     font-size: var(--fs-h1);
     font-weight: 700;
     color: var(--blue);
+    line-height: 1;
   }
 
   .stat-label {
@@ -394,7 +388,6 @@ function renderHeadline(text: string): string {
 
   /* md-body styles are in global.css — only override spacing for portfolio */
   .md-body {
-    margin-top: 5rem;
     padding-bottom: 6rem;
     font-size: var(--fs-body);
   }
@@ -496,8 +489,11 @@ function renderHeadline(text: string): string {
       padding: 0.15rem 0.5rem;
     }
 
+    .section-title {
+      margin-top: 3rem;
+    }
+
     .stats {
-      margin-top: 2rem;
       gap: 1rem;
     }
 

@@ -47,6 +47,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const response = await next();
 
+  // Prevent indexing of static assets (_astro/) while keeping them crawlable
+  if (pathname.startsWith("/_astro/")) {
+    response.headers.set("X-Robots-Tag", "noindex");
+  }
+
   response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-Content-Type-Options", "nosniff");

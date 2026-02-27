@@ -32,12 +32,12 @@ const allPosts = isAdmin
   <div class="blog-list">
     <div class="blog-header">
       <h1 class="blog-title">Articles<span class="dot">.</span></h1>
-      <p class="blog-subtitle">Notes techniques et retours d'expérience.</p>
+      <h2 class="blog-subtitle">Notes techniques et retours d'expérience.</h2>
     </div>
 
     {allPosts.map((p) => (
       <article class:list={["blog-article", { hidden: !p.visible }]}>
-        <a href={`/blog/${p.id}`} class="article-link">
+        <a href={`/article/${p.id}`} class="article-link">
           <div class="article-meta">
             <span class="article-cat">{p.cat}</span>
             <span class="meta-dot" />
@@ -62,9 +62,6 @@ const allPosts = isAdmin
   }
 
   .blog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     margin-bottom: 4rem;
   }
 
@@ -190,11 +187,6 @@ const allPosts = isAdmin
   @media (max-width: 768px) {
     .blog-list {
       padding: 3rem 1.2rem 4rem;
-    }
-
-    .blog-header {
-      flex-direction: column;
-      gap: 1.5rem;
     }
 
     .blog-article {

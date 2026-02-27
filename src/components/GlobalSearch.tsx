@@ -333,7 +333,7 @@ export default function GlobalSearch({ posts }: Props) {
                       title={post.title}
                       preview={post.excerpt}
                       meta={post.cat}
-                      onClick={() => navigate(`/blog/${post.id}`)}
+                      onClick={() => navigate(`/article/${post.id}`)}
                     />
                   ))}
                 </div>
