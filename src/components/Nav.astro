@@ -16,6 +16,7 @@ const links = [
   { label: "Portfolio", href: "/" },
   { label: "Articles", href: "/blog" },
   { label: "Docs", href: "/docs" },
+  { label: "Contact", href: "/contact" },
 ];
 ---
 
@@ -51,6 +52,14 @@ const links = [
         class:list={["nav-link", { active: currentPath === "/admin/docs" }]}
       >
         Admin Docs
+      </a>
+    )}
+    {isAdmin && (
+      <a
+        href="/admin/messages"
+        class:list={["nav-link", { active: currentPath === "/admin/messages" }]}
+      >
+        Messages
       </a>
     )}
     {!(maintenance && !isAdmin) && <div class="nav-divider" />}
@@ -103,6 +112,14 @@ const links = [
         class:list={["mobile-link", { active: currentPath === "/admin/docs" }]}
       >
         Admin Docs
+      </a>
+    )}
+    {isAdmin && (
+      <a
+        href="/admin/messages"
+        class:list={["mobile-link", { active: currentPath === "/admin/messages" }]}
+      >
+        Messages
       </a>
     )}
     <div class="mobile-spacer" />
@@ -242,7 +259,7 @@ const links = [
   .nav-right {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 1.4rem;
   }
 
   .nav-link {

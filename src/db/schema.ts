@@ -111,6 +111,18 @@ export const portfolioHistory = sqliteTable("portfolio_history", {
   createdAt: text("created_at").notNull(),
 });
 
+// --- Messages (contact form submissions) ---
+
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  read: integer("read", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+});
+
 // --- Settings (key/value store) ---
 
 export const settings = sqliteTable("settings", {

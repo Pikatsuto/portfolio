@@ -1,0 +1,336 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ConfirmModal from "../../../components/ConfirmModal.astro";
+import Icon from "../../../components/Icon.astro";
+import { db } from "../../../db";
+import { messages } from "../../../db/schema";
+import { eq } from "drizzle-orm";
+
+const id = Number(Astro.params.id);
+const msg = await db.select().from(messages).where(eq(messages.id, id)).get();
+
+if (!msg) {
+  return Astro.redirect("/admin/messages");
+}
+
+// Mark as read automatically
+if (!msg.read) {
+  await db.update(messages).set({ read: true }).where(eq(messages.id, id));
+}
+
+const date = new Date(msg.createdAt).toLocaleDateString("fr-FR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+---
+
+<BaseLayout title={`${msg.subject} — Messages`}>
+  <div class="msg-page">
+    <div class="msg-inner">
+      <a href="/admin/messages" class="back-link">
+        <Icon name="arrow-left" size={14} /> Retour aux messages
+      </a>
+
+      <div class="msg-card">
+        <div class="msg-meta">
+          <div class="msg-meta-left">
+            <span class="msg-from">{msg.name}</span>
+            <span class="msg-email">{msg.email}</span>
+          </div>
+          <span class="msg-date">{date}</span>
+        </div>
+
+        <h1 class="msg-subject">{msg.subject}<span class="dot">.</span></h1>
+
+        <div class="msg-body">{msg.message}</div>
+      </div>
+
+      <div class="msg-actions">
+        <button id="delete-btn" class="action-btn action-btn-danger">Supprimer</button>
+      </div>
+
+      <!-- Reply section -->
+      <div class="reply-section">
+        <h2 class="reply-title">Repondre<span class="dot">.</span></h2>
+        <div class="reply-editor">
+          <textarea id="reply-text" class="reply-textarea" rows="8" placeholder="Redigez votre reponse..."></textarea>
+          <div class="reply-footer">
+            <span id="reply-status" class="reply-status"></span>
+            <button type="button" id="reply-btn" class="reply-send">Envoyer la reponse</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ConfirmModal />
+</BaseLayout>
+
+<script is:inline define:vars={{ msgId: id }}>
+  document.getElementById("delete-btn")?.addEventListener("click", async function() {
+    if (!(await window.__confirmModal("Supprimer ce message ?"))) return;
+    var res = await fetch("/api/contact/" + msgId, { method: "DELETE" });
+    if (res.ok) window.location.href = "/admin/messages";
+  });
+
+  (function() {
+    var btn = document.getElementById("reply-btn");
+    var textarea = document.getElementById("reply-text");
+    var status = document.getElementById("reply-status");
+
+    btn.addEventListener("click", async function() {
+      var text = textarea.value.trim();
+      if (!text) return;
+
+      btn.disabled = true;
+      btn.textContent = "Envoi...";
+      status.textContent = "";
+      status.className = "reply-status";
+
+      try {
+        var res = await fetch("/api/contact/" + msgId + "/reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text }),
+        });
+
+        if (res.ok) {
+          status.textContent = "Reponse envoyee !";
+          status.className = "reply-status success";
+          textarea.value = "";
+        } else {
+          var data = await res.json();
+          status.textContent = data.error || "Erreur lors de l'envoi.";
+          status.className = "reply-status error";
+        }
+      } catch (err) {
+        status.textContent = "Erreur reseau.";
+        status.className = "reply-status error";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Envoyer la reponse";
+      }
+    });
+  })();
+</script>
+
+<style>
+  .msg-page {
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 3rem;
+  }
+
+  .msg-inner {
+    padding: 3rem 0 8rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--tertiary);
+    text-decoration: none;
+    margin-bottom: 2rem;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover {
+    color: var(--blue-hover);
+  }
+
+  .msg-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .msg-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .msg-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .msg-from {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .msg-email {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--tertiary);
+  }
+
+  .msg-date {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+    flex-shrink: 0;
+  }
+
+  .msg-subject {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-h1);
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .msg-body {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-body);
+    color: var(--body);
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  .msg-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 3rem;
+  }
+
+  .action-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--tertiary);
+    padding: 0.4rem 1.2rem;
+    cursor: pointer;
+    font-size: var(--fs-xs);
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+
+  .action-btn-danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--red);
+  }
+
+  /* ── Reply section ── */
+  .reply-section {
+    border-top: 1px solid var(--line);
+    padding-top: 2rem;
+  }
+
+  .reply-title {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 1.2rem;
+  }
+
+  /* ── Reply editor ── */
+  .reply-editor {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reply-textarea {
+    width: 100%;
+    min-height: 200px;
+    max-height: 400px;
+    padding: 1rem 1.2rem;
+    background: var(--bg);
+    border: none;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+    outline: none;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .reply-textarea::placeholder {
+    color: var(--tertiary);
+  }
+
+  .reply-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface-alt);
+    border-top: 1px solid var(--line);
+  }
+
+  .reply-status {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+  }
+
+  .reply-status.success {
+    color: var(--green);
+  }
+
+  .reply-status.error {
+    color: var(--red);
+  }
+
+  .reply-send {
+    background: var(--blue);
+    border: none;
+    color: #fff;
+    padding: 0.45rem 1.2rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    border-radius: 4px;
+    transition: background 0.2s, opacity 0.2s;
+  }
+
+  .reply-send:hover:not(:disabled) {
+    background: var(--blue-hover);
+  }
+
+  .reply-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .msg-page {
+      padding: 0 1.2rem;
+    }
+
+    .msg-card {
+      padding: 1.2rem;
+    }
+
+    .msg-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3rem;
+    }
+  }
+</style>

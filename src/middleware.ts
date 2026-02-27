@@ -20,7 +20,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // --- API mutation protection ---
   // GET requests to public API routes are allowed without auth
   // All other API methods require auth (except login)
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/login")) {
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/login") && !pathname.startsWith("/api/contact/submit")) {
     const method = context.request.method;
     if (method !== "GET" && !authenticated) {
       return new Response(JSON.stringify({ error: "Non authentifié" }), {

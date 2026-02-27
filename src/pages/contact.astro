@@ -1,0 +1,287 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Contact — Gabriel Guillou">
+  <div class="contact-page">
+    <div class="contact-card">
+      <h1 class="contact-title">Contact<span class="dot">.</span></h1>
+      <p class="contact-sub">Une question, une proposition ou juste un message ? Ecrivez-moi.</p>
+
+      <form id="contact-form" class="contact-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name" class="form-label">Nom</label>
+            <input type="text" id="name" name="name" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" class="form-input" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="subject" class="form-label">Objet</label>
+          <input type="text" id="subject" name="subject" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label for="message" class="form-label">Message</label>
+          <textarea id="message" name="message" class="form-input form-textarea" rows="6" required></textarea>
+        </div>
+
+        <button type="submit" id="submit-btn" class="submit-btn">
+          <span id="submit-label">Envoyer</span>
+        </button>
+        <p id="contact-error" class="contact-error" hidden></p>
+        <p id="contact-success" class="contact-success" hidden>Message envoye avec succes !</p>
+      </form>
+    </div>
+  </div>
+</BaseLayout>
+
+<script is:inline>
+  (function() {
+    var submitBtn = document.getElementById("submit-btn");
+    var submitLabel = document.getElementById("submit-label");
+    var form = document.getElementById("contact-form");
+    var errorEl = document.getElementById("contact-error");
+    var successEl = document.getElementById("contact-success");
+
+    // SHA-256 via Web Crypto API
+    async function sha256(str) {
+      var buf = new TextEncoder().encode(str);
+      var hash = await crypto.subtle.digest("SHA-256", buf);
+      return Array.from(new Uint8Array(hash)).map(function(b) { return b.toString(16).padStart(2, "0"); }).join("");
+    }
+
+    // Brute-force solve PoW challenge (~1-3s on a real browser)
+    async function solveChallenge(salt, targetHash, maxNumber) {
+      for (var i = 0; i <= maxNumber; i++) {
+        var h = await sha256(salt + i);
+        if (h === targetHash) return i;
+        // Yield every 1000 iterations to keep UI responsive
+        if (i % 1000 === 0) await new Promise(function(r) { setTimeout(r, 0); });
+      }
+      return null;
+    }
+
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      errorEl.hidden = true;
+      successEl.hidden = true;
+      submitBtn.disabled = true;
+
+      // Step 1: Fetch PoW challenge
+      submitLabel.textContent = "Verification anti-bot...";
+      submitBtn.classList.add("verifying");
+
+      var powData = null;
+      try {
+        var challengeRes = await fetch("/api/contact/challenge");
+        var challenge = await challengeRes.json();
+        var number = await solveChallenge(challenge.salt, challenge.hash, challenge.maxNumber);
+
+        if (number === null) {
+          errorEl.textContent = "Verification anti-bot echouee. Rechargez la page.";
+          errorEl.hidden = false;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("verifying");
+          submitLabel.textContent = "Envoyer";
+          return;
+        }
+
+        powData = { salt: challenge.salt, number: number, signature: challenge.signature };
+      } catch (err) {
+        errorEl.textContent = "Erreur de connexion. Reessayez.";
+        errorEl.hidden = false;
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("verifying");
+        submitLabel.textContent = "Envoyer";
+        return;
+      }
+
+      // Step 2: Submit form with PoW proof
+      submitLabel.textContent = "Envoi...";
+      submitBtn.classList.remove("verifying");
+
+      try {
+        var res = await fetch("/api/contact/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            subject: document.getElementById("subject").value,
+            message: document.getElementById("message").value,
+            salt: powData.salt,
+            number: powData.number,
+            signature: powData.signature,
+          }),
+        });
+
+        if (res.ok) {
+          successEl.hidden = false;
+          form.reset();
+          submitLabel.textContent = "Envoyer";
+          submitBtn.disabled = false;
+        } else {
+          var data = await res.json();
+          errorEl.textContent = data.error || "Erreur lors de l'envoi.";
+          errorEl.hidden = false;
+          submitLabel.textContent = "Envoyer";
+          submitBtn.disabled = false;
+        }
+      } catch (err) {
+        errorEl.textContent = "Erreur reseau. Reessayez.";
+        errorEl.hidden = false;
+        submitLabel.textContent = "Envoyer";
+        submitBtn.disabled = false;
+      }
+    });
+  })();
+</script>
+
+<style>
+  .contact-page {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex: 1;
+    padding: 5rem 2rem 8rem;
+  }
+
+  .contact-card {
+    max-width: 520px;
+    width: 100%;
+  }
+
+  .contact-title {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-display);
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .contact-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-body);
+    color: var(--secondary);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+  }
+
+  .form-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+
+  .form-input:focus {
+    border-color: var(--blue);
+  }
+
+  .form-input::placeholder {
+    color: var(--tertiary);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+  }
+
+  /* ── Submit ── */
+  .submit-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--blue);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    background: var(--blue-hover);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .submit-btn.verifying {
+    background: color-mix(in srgb, var(--blue) 70%, var(--surface));
+  }
+
+  .contact-error {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--red);
+    margin: 0;
+  }
+
+  .contact-success {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--green);
+    margin: 0;
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .contact-page {
+      padding: 3rem 1.2rem 4rem;
+    }
+
+    .form-row {
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+  }
+</style>

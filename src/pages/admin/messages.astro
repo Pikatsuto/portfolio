@@ -1,0 +1,191 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ConfirmModal from "../../components/ConfirmModal.astro";
+import { db } from "../../db";
+import { messages } from "../../db/schema";
+import { desc } from "drizzle-orm";
+
+const allMessages = await db.select().from(messages).orderBy(desc(messages.createdAt)).all();
+const unreadCount = allMessages.filter((m) => !m.read).length;
+---
+
+<BaseLayout title="Messages — Gabriel Guillou">
+  <div class="admin-page">
+    <div class="admin-inner">
+      <div class="admin-header">
+        <div>
+          <h1 class="admin-title">Messages<span class="dot">.</span></h1>
+          <p class="admin-stats">{allMessages.length} messages · {unreadCount} non lus</p>
+        </div>
+      </div>
+
+      {allMessages.length === 0 ? (
+        <p class="empty">Aucun message pour le moment.</p>
+      ) : (
+        <div class="msg-list">
+          {allMessages.map((m) => (
+            <a href={`/admin/messages/${m.id}`} class:list={["msg-item", { unread: !m.read }]}>
+              <div class="msg-header">
+                <div class="msg-header-left">
+                  {!m.read && <span class="unread-dot" />}
+                  <span class="msg-name">{m.name}</span>
+                  <span class="msg-email">{m.email}</span>
+                </div>
+                <span class="msg-date">{new Date(m.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+              </div>
+              <div class="msg-subject">{m.subject}</div>
+              <div class="msg-preview">{m.message.length > 150 ? m.message.slice(0, 150) + "..." : m.message}</div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+  <ConfirmModal />
+</BaseLayout>
+
+<style>
+  .admin-page {
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 3rem;
+  }
+
+  .admin-inner {
+    padding: 4rem 0 8rem;
+  }
+
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+  }
+
+  .admin-title {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-h1);
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .admin-stats {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-size: var(--fs-sm);
+    margin-top: 0.3rem;
+  }
+
+  .empty {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--tertiary);
+    font-size: var(--fs-body);
+    text-align: center;
+    padding: 4rem 0;
+  }
+
+  .msg-list {
+    border-top: 1px solid var(--line);
+  }
+
+  .msg-item {
+    display: block;
+    padding: 1.2rem 0.8rem;
+    margin: 0 -0.8rem;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+
+  .msg-item:last-child {
+    border-bottom: none;
+  }
+
+  .msg-item:hover {
+    background: color-mix(in srgb, var(--blue) 4%, transparent);
+  }
+
+  .msg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .msg-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .unread-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+    flex-shrink: 0;
+  }
+
+  .msg-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .msg-email {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+  }
+
+  .msg-date {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-xs);
+    color: var(--tertiary);
+    flex-shrink: 0;
+  }
+
+  .msg-subject {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+
+  .msg-preview {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--body);
+    line-height: 1.5;
+  }
+
+  /* ─── Tablet ─── */
+  @media (max-width: 1024px) {
+    .admin-page {
+      padding: 0 1.5rem;
+    }
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 768px) {
+    .admin-page {
+      padding: 0 1.2rem;
+    }
+
+    .msg-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+    }
+  }
+</style>
