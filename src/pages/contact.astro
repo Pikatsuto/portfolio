@@ -1,5 +1,13 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+const contactLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  name: "Contact — Gabriel Guillou",
+  description: "Contactez Gabriel Guillou pour toute question, proposition de collaboration ou simple message.",
+  url: new URL("/contact", Astro.site).href,
+});
 ---
 
 <BaseLayout title="Contact — Écrivez à Gabriel Guillou" description="Contactez Gabriel Guillou pour toute question, proposition de collaboration ou simple message. Formulaire sécurisé avec protection anti-bot." noindex>
@@ -45,6 +53,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </form>
     </div>
   </div>
+  <script type="application/ld+json" set:html={contactLd} />
 </BaseLayout>
 
 <script is:inline>
