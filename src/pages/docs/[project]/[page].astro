@@ -88,6 +88,7 @@ const breadcrumbLd = JSON.stringify({
   <div class="docs-reader">
     <!-- Left sidebar -->
     <aside class="sidebar">
+      <button class="sidebar-close" id="sidebar-close" aria-label="Fermer la navigation"><Icon name="x" size={18} /></button>
       <a href="/docs" class="back-link"><Icon name="arrow-left" size={14} /> Tous les projets</a>
       <div class="sidebar-title">{proj.displayName || proj.name}</div>
       {orderedSections.map((s) => (
@@ -163,8 +164,11 @@ const breadcrumbLd = JSON.stringify({
       document.body.style.overflow = "";
     }
 
+    const closeBtn = document.getElementById("sidebar-close");
+
     toggle.addEventListener("click", openSidebar);
     overlay.addEventListener("click", closeSidebar);
+    if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
 
     // Close on link click
     sidebar.querySelectorAll("a").forEach((link) => {
@@ -176,7 +180,7 @@ const breadcrumbLd = JSON.stringify({
 <style>
   .docs-reader {
     display: grid;
-    grid-template-columns: 250px 1fr 170px;
+    grid-template-columns: 250px 1fr 220px;
     flex: 1;
     overflow: hidden;
   }
@@ -209,6 +213,10 @@ const breadcrumbLd = JSON.stringify({
 
   .back-link:hover {
     color: var(--blue-hover);
+  }
+
+  .sidebar-close {
+    display: none;
   }
 
   .sidebar-title {
@@ -396,7 +404,7 @@ const breadcrumbLd = JSON.stringify({
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 90;
+    z-index: 100;
   }
 
   .sidebar-overlay.open {
@@ -448,14 +456,57 @@ const breadcrumbLd = JSON.stringify({
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 91;
+      z-index: 101;
       background: var(--bg);
-      padding: 1.5rem 1.2rem;
+      padding: 0.8rem 1.2rem 1.5rem;
       overflow-y: auto;
     }
 
     .sidebar.open {
       display: flex;
+    }
+
+    .sidebar-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--tertiary);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .sidebar-close:hover {
+      border-color: var(--blue);
+      color: var(--blue-hover);
+    }
+
+    .back-link {
+      align-self: flex-start;
+      font-size: var(--fs-h2);
+      padding: 0.3rem 0;
+      margin-top: 0;
+    }
+
+    .sidebar-title {
+      font-size: var(--fs-h1);
+    }
+
+    .section-title {
+      font-size: var(--fs-h3);
+    }
+
+    .sidebar-item {
+      font-size: var(--fs-h3);
+      padding: 0.5rem 0;
+      padding-left: 0.8rem;
     }
 
     .sidebar-toggle {
