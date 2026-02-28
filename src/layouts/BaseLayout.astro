@@ -76,6 +76,8 @@ const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
         } else {
           document.documentElement.setAttribute("data-theme", "dark");
         }
+        var fs = localStorage.getItem("fontScale");
+        if (fs) document.documentElement.style.fontSize = fs + "%";
       })();
     </script>
   </head>

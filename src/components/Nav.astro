@@ -1,5 +1,5 @@
 ---
-import ThemeToggle from "./ThemeToggle";
+import SettingsDropdown from "./SettingsDropdown";
 import GlobalSearch from "./GlobalSearch";
 import Icon from "./Icon.astro";
 
@@ -22,7 +22,7 @@ const links = [
 
 {maintenance && isAdmin && (
   <div class="maintenance-banner">
-    <Icon name="wrench" size={14} /> Mode maintenance actif — les visiteurs voient la page de maintenance.
+    <Icon name="wrench" size={14} /> Maintenance active
   </div>
 )}
 
@@ -63,8 +63,8 @@ const links = [
       </a>
     )}
     {!(maintenance && !isAdmin) && <div class="nav-divider" />}
-    <GlobalSearch client:load posts={searchPosts} />
-    <ThemeToggle client:load />
+    {(!maintenance || isAdmin) && <GlobalSearch client:load posts={searchPosts} />}
+    <SettingsDropdown client:load />
     {isAdmin && (
       <button id="maintenance-btn" class:list={["maint-btn", { active: maintenance }]}>
         <Icon name="wrench" size={14} /> {maintenance ? "ON" : "OFF"}
@@ -77,8 +77,8 @@ const links = [
     )}
   </div>
   <div class="nav-mobile-right">
-    <GlobalSearch client:load posts={searchPosts} />
-    <ThemeToggle client:load />
+    {(!maintenance || isAdmin) && <GlobalSearch client:load posts={searchPosts} />}
+    <SettingsDropdown client:load />
     <button class="burger" id="burger-btn" aria-label="Menu">
       <span class="burger-icon"><Icon name="menu" size={20} /></span>
     </button>
@@ -151,6 +151,11 @@ const links = [
     var closeSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
     function openPanel() {
+      var nav = document.querySelector(".nav");
+      var drawer = panel.querySelector(".mobile-drawer");
+      if (nav && drawer) {
+        drawer.style.paddingTop = (nav.getBoundingClientRect().bottom + 16) + "px";
+      }
       panel.classList.remove("closing");
       panel.classList.add("open");
       burger.querySelector(".burger-icon").innerHTML = closeSvg;
@@ -214,7 +219,7 @@ const links = [
 
 <style>
   .maintenance-banner {
-    background: rgba(245, 158, 11, 0.1);
+    background: color-mix(in srgb, rgb(245, 158, 11) 10%, var(--bg));
     border-bottom: 1px solid rgba(245, 158, 11, 0.3);
     padding: 0.4rem 3rem;
     text-align: center;
@@ -225,6 +230,8 @@ const links = [
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
+    position: relative;
+    z-index: 102;
   }
 
   .nav {
@@ -237,7 +244,7 @@ const links = [
     border-bottom: 1px solid var(--line);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 102;
     background: var(--nav-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -388,7 +395,7 @@ const links = [
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 99;
+    z-index: 101;
   }
 
   .nav-mobile-panel.open {
@@ -557,5 +564,6 @@ const links = [
     .maintenance-banner {
       padding: 0.4rem 1.2rem;
     }
+
   }
 </style>
