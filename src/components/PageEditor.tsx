@@ -55,9 +55,11 @@ const marked = new Marked({
   renderer: {
     heading({ text, depth }) {
       const id = text.toLowerCase().replace(/<[^>]*>/g, "").replace(/[^a-z0-9àâéèêëïîôùûüÿçœæ]+/g, "-").replace(/(^-|-$)/g, "");
-      if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}</h2>`;
-      if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}</h3>`;
-      return `<h${depth} id="${id}">${text}</h${depth}>`;
+      const dot = '<span class="dot">.</span>';
+      const level = Math.min(depth + 1, 6);
+      if (level === 2) return `<h2 class="md-h2" id="${id}">${text}${dot}</h2>`;
+      if (level === 3) return `<h3 class="md-h3" id="${id}">${text}${dot}</h3>`;
+      return `<h${level} id="${id}">${text}${dot}</h${level}>`;
     },
     code({ text, lang }) {
       if (lang === "mermaid") {
@@ -300,6 +302,14 @@ export default function PageEditor({ content, cancelUrl, saveUrl, pageTitle }: P
   const [mode, setMode] = useState<"edit" | "split" | "preview">(isMobile ? "edit" : "split");
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const hasYaml = Object.entries(initialFM).some(([, v]) => typeof v === "string");
+  const [activeTab, setActiveTab] = useState<"yaml" | "contenu">(hasYaml ? "yaml" : "contenu");
+
+  // Ref callback: render preview as soon as the div mounts
+  const handlePreviewRef = useCallback((el: HTMLDivElement | null) => {
+    previewRef.current = el;
+    if (el) renderToPreview(el, interpolate(mdRef.current, frontmatter));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── YAML helpers ── */
 
@@ -408,6 +418,42 @@ export default function PageEditor({ content, cancelUrl, saveUrl, pageTitle }: P
     { key: "preview", label: "Aperçu" },
   ];
 
+  const renderYamlForm = () => (
+    <div className="yaml-grid">
+      {stringFields.map(([key, val]) => (
+        <div key={key} className={val.length > 50 ? "yaml-full" : ""}>
+          <label className="yaml-label">{key}</label>
+          <input
+            value={val}
+            onChange={e => updateFM(key, e.target.value)}
+            className="yaml-input"
+          />
+        </div>
+      ))}
+    </div>
+  );
+
+  const previewYaml = () => (
+    <div className="yaml-preview" style={{ padding: "2rem 1rem" }}>
+      <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: "var(--fs-h1)", fontWeight: 700, color: "var(--white)", marginBottom: "1rem" }}>
+        {(frontmatter.title as string) || pageTitle || "Titre"}
+      </div>
+      {(frontmatter.description as string) && (
+        <div style={{ fontFamily: "'DM Sans', sans-serif", color: "var(--secondary)", fontSize: "var(--fs-body-lg)", lineHeight: 1.8 }}>
+          {frontmatter.description as string}
+        </div>
+      )}
+      {stringFields.filter(([k]) => k !== "title" && k !== "description").map(([key, val]) => (
+        val ? (
+          <div key={key} style={{ marginTop: "1rem" }}>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "var(--fs-xs)", color: "var(--tertiary)", letterSpacing: "1px", textTransform: "uppercase" as const }}>{key}</span>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", color: "var(--white)", marginTop: "0.2rem" }}>{val}</div>
+          </div>
+        ) : null
+      ))}
+    </div>
+  );
+
   return (
     <div className="editor-root">
       {/* Header */}
@@ -429,69 +475,71 @@ export default function PageEditor({ content, cancelUrl, saveUrl, pageTitle }: P
         </div>
       </div>
 
-      {/* YAML fields */}
-      {stringFields.length > 0 && (
-        <div className="yaml-section">
+      {/* Section tabs */}
+      <div className={`yaml-section${activeTab === "yaml" ? " yaml-section--expanded" : ""}`}>
+        {hasYaml && (
           <div className="yaml-tabs">
-            <span className="yaml-tabs-label">YAML</span>
+            <button onClick={() => setActiveTab("yaml")} className={`yaml-tab${activeTab === "yaml" ? " active" : ""}`}>YAML</button>
+            <button onClick={() => setActiveTab("contenu")} className={`yaml-tab${activeTab === "contenu" ? " active" : ""}`}>Contenu</button>
           </div>
-          <div className="yaml-form">
-            <div className="yaml-grid">
-              {stringFields.map(([key, val]) => (
-                <div key={key} className={val.length > 50 ? "yaml-full" : ""}>
-                  <label className="yaml-label">{key}</label>
-                  <input
-                    value={val}
-                    onChange={e => updateFM(key, e.target.value)}
-                    className="yaml-input"
-                  />
-                </div>
-              ))}
-            </div>
+        )}
+        {activeTab === "yaml" && stringFields.length > 0 && mode === "edit" && (
+          <div className="yaml-form">{renderYamlForm()}</div>
+        )}
+        {activeTab === "yaml" && stringFields.length > 0 && mode === "preview" && (
+          <div className="yaml-form yaml-page-preview">{previewYaml()}</div>
+        )}
+        {activeTab === "yaml" && stringFields.length > 0 && mode === "split" && (
+          <div className="yaml-split">
+            <div className="yaml-form yaml-split-form">{renderYamlForm()}</div>
+            <div className="yaml-form yaml-split-preview yaml-page-preview">{previewYaml()}</div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Toolbar + Editor — only in Contenu mode */}
+      {activeTab === "contenu" && (
+        <>
+          <div className="editor-toolbar">
+            {tb.map((item, i) =>
+              item.sep ? (
+                <div key={i} className="editor-toolbar-sep" />
+              ) : (
+                <button
+                  key={i}
+                  onClick={item.a}
+                  title={item.label}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "color-mix(in srgb, var(--blue) 10%, transparent)";
+                    e.currentTarget.style.color = "var(--blue-hover)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--tertiary)";
+                  }}
+                  className="editor-toolbar-btn"
+                >
+                  {item.icon}
+                </button>
+              )
+            )}
+          </div>
+
+          <div className={`editor-area mdx-editor-area editor-area--${mode}`}>
+            {mode !== "preview" && (
+              <HighlightedTextarea
+                defaultValue={initialBody}
+                onInput={updatePreview}
+                onScroll={mode === "split" ? syncPreviewScroll : undefined}
+                style={{ borderRight: mode === "split" ? "1px solid var(--line)" : "none" }}
+              />
+            )}
+            {mode !== "edit" && (
+              <div ref={handlePreviewRef} className={`md-body editor-preview${mode === "preview" ? " editor-preview--full" : ""}`} />
+            )}
+          </div>
+        </>
       )}
-
-      {/* Toolbar */}
-      <div className="editor-toolbar">
-        {tb.map((item, i) =>
-          item.sep ? (
-            <div key={i} className="editor-toolbar-sep" />
-          ) : (
-            <button
-              key={i}
-              onClick={item.a}
-              title={item.label}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "color-mix(in srgb, var(--blue) 10%, transparent)";
-                e.currentTarget.style.color = "var(--blue-hover)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "var(--tertiary)";
-              }}
-              className="editor-toolbar-btn"
-            >
-              {item.icon}
-            </button>
-          )
-        )}
-      </div>
-
-      {/* Editor area */}
-      <div className={`editor-area mdx-editor-area editor-area--${mode}`}>
-        {mode !== "preview" && (
-          <HighlightedTextarea
-            defaultValue={initialBody}
-            onInput={updatePreview}
-            onScroll={mode === "split" ? syncPreviewScroll : undefined}
-            style={{ borderRight: mode === "split" ? "1px solid var(--line)" : "none" }}
-          />
-        )}
-        {mode !== "edit" && (
-          <div ref={previewRef} className={`md-body editor-preview${mode === "preview" ? " editor-preview--full" : ""}`} />
-        )}
-      </div>
     </div>
   );
 }
