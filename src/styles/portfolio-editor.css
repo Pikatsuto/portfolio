@@ -30,16 +30,6 @@
   border-bottom: 1px solid var(--line);
 }
 
-.yaml-tabs-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--blue);
-  padding: 0.6rem 0.8rem 0.6rem 0;
-  border-right: 1px solid var(--line);
-  margin-right: 0.5rem;
-  flex-shrink: 0;
-}
-
 .yaml-tab {
   background: transparent;
   border: none;
@@ -51,6 +41,9 @@
   font-family: 'DM Sans', sans-serif;
   font-weight: 500;
   transition: color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .yaml-tab:hover {
@@ -63,10 +56,67 @@
   color: var(--blue-hover);
 }
 
+.yaml-tab--draggable {
+  cursor: grab;
+}
+
+.yaml-tab--draggable:active {
+  cursor: grabbing;
+}
+
+.tab-grip {
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
 .yaml-form {
   padding: 1.2rem 1.5rem;
-  max-height: 260px;
   overflow-y: auto;
+}
+
+/* When expanded (non-parcours tab), fill remaining editor space */
+.yaml-section--expanded {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.yaml-section--expanded .yaml-form {
+  flex: 1;
+}
+
+.yaml-section--expanded .yaml-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── YAML split view ─── */
+
+.yaml-split {
+  display: flex;
+  border-top: 1px solid var(--line);
+}
+
+.yaml-split-form {
+  flex: 1;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+}
+
+.yaml-split-preview {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Preview container — matches the public page background */
+.yaml-page-preview {
+  background: var(--bg);
+  padding: 0 3rem;
+  max-width: var(--content-max-width);
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* ─── Form fields ─── */
@@ -137,15 +187,63 @@
 }
 
 .yaml-arr-row--skills {
-  grid-template-columns: 150px 1fr 32px;
+  grid-template-columns: 24px 150px 1fr auto;
 }
 
 .yaml-arr-row--stats {
-  grid-template-columns: 100px 1fr 32px;
+  grid-template-columns: 24px 100px 1fr auto;
 }
 
 .yaml-arr-row--title {
-  grid-template-columns: 1fr 32px;
+  grid-template-columns: 24px 1fr auto;
+}
+
+/* ─── Drag handles ─── */
+
+.yaml-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: var(--tertiary);
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.yaml-drag-handle:hover {
+  opacity: 1;
+  color: var(--blue-hover);
+}
+
+.yaml-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.yaml-move-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--tertiary);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.yaml-move-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: var(--blue-hover);
+}
+
+.yaml-move-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 .yaml-arr-row--meta {
@@ -204,14 +302,55 @@
   background: color-mix(in srgb, var(--blue) 10%, transparent);
 }
 
+/* ─── Project cards: draggable cursor ─── */
+
+.yaml-project-card[draggable] {
+  cursor: grab;
+}
+
+.yaml-project-card[draggable]:active {
+  cursor: grabbing;
+}
+
+/* ── Touch fallback: show arrows, hide drag handles ── */
+@media (hover: none) {
+  .yaml-drag-handle {
+    display: none;
+  }
+
+  .yaml-arr-row--skills {
+    grid-template-columns: 150px 1fr auto;
+  }
+
+  .yaml-arr-row--stats {
+    grid-template-columns: 100px 1fr auto;
+  }
+
+  .yaml-arr-row--title {
+    grid-template-columns: 1fr auto;
+  }
+
+  .tab-grip {
+    display: none;
+  }
+
+  .yaml-tab--draggable {
+    cursor: pointer;
+  }
+
+  .yaml-move-btn {
+    display: flex;
+  }
+}
+
 /* ── Mobile ── */
 @media (max-width: 1280px) {
   .yaml-tabs {
     padding: 0 0.8rem;
+    flex-wrap: wrap;
   }
 
   .yaml-form {
     padding: 1rem 0.8rem;
   }
-
 }

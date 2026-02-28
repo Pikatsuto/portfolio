@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, memo } from "react";
 import yaml from "js-yaml";
 import "../styles/editor.css";
 import "../styles/portfolio-editor.css";
+import "../styles/portfolio-sections.css";
 import { Marked } from "marked";
 import mermaid from "mermaid";
 import {
@@ -11,6 +12,7 @@ import {
   Code, CodeXml, GitBranch,
   Link, Image, Minus, Quote,
   Table, Superscript, Subscript,
+  GripVertical, ChevronUp, ChevronDown,
 } from "lucide-react";
 
 /* ─── Types ─── */
@@ -23,8 +25,11 @@ interface Frontmatter {
   skills?: Array<{ name: string; details: string }>;
   projects?: Array<{ title: string; description: string; tags?: string[]; blog?: string; docs?: string }>;
   stats?: Array<{ value: string; label: string }>;
+  sectionOrder?: string[];
   [key: string]: unknown;
 }
+
+const DEFAULT_SECTION_ORDER = ["skills", "projects", "stats", "parcours"];
 
 interface Props {
   content: string;
@@ -55,9 +60,11 @@ const marked = new Marked({
   renderer: {
     heading({ text, depth }) {
       const id = text.toLowerCase().replace(/<[^>]*>/g, "").replace(/[^a-z0-9àâéèêëïîôùûüÿçœæ]+/g, "-").replace(/(^-|-$)/g, "");
-      if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}</h2>`;
-      if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}</h3>`;
-      return `<h${depth} id="${id}">${text}</h${depth}>`;
+      const dot = '<span class="dot">.</span>';
+      const level = Math.min(depth + 1, 6);
+      if (level === 2) return `<h2 class="md-h2" id="${id}">${text}${dot}</h2>`;
+      if (level === 3) return `<h3 class="md-h3" id="${id}">${text}${dot}</h3>`;
+      return `<h${level} id="${id}">${text}${dot}</h${level}>`;
     },
     code({ text, lang }) {
       if (lang === "mermaid") {
@@ -308,6 +315,12 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
+  // Ref callback: render preview as soon as the div mounts
+  const handlePreviewRef = useCallback((el: HTMLDivElement | null) => {
+    previewRef.current = el;
+    if (el) renderToPreview(el, mdRef.current);
+  }, []);
+
   /* ── YAML helpers ── */
 
   const updateFM = (k: string, v: unknown) =>
@@ -331,6 +344,110 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
       ...f,
       [k]: [...((f[k] as unknown[]) || []), template],
     }));
+
+  const moveArr = (k: string, from: number, to: number) => {
+    if (from === to) return;
+    setFrontmatter(fm => {
+      const arr = [...((fm[k] as unknown[]) || [])];
+      const [item] = arr.splice(from, 1);
+      arr.splice(to, 0, item);
+      return { ...fm, [k]: arr };
+    });
+  };
+
+  // Drag state (refs to avoid re-renders)
+  const dragKey = useRef<string>("");
+  const dragFrom = useRef(-1);
+  const dragOverIdx = useRef(-1);
+
+  const onDragStart = (k: string, i: number) => {
+    dragKey.current = k;
+    dragFrom.current = i;
+  };
+
+  // Only allow drag when grip is held
+  const onGripDown = (e: React.MouseEvent) => {
+    const row = (e.currentTarget as HTMLElement).closest("[data-drag-row]") as HTMLElement | null;
+    if (row) row.setAttribute("draggable", "true");
+  };
+  const clearDraggable = () => {
+    document.querySelectorAll("[data-drag-row][draggable]").forEach(el => el.removeAttribute("draggable"));
+  };
+  const onDragEnd = () => clearDraggable();
+
+  const onDragOver = (e: React.DragEvent, i: number) => {
+    e.preventDefault();
+    dragOverIdx.current = i;
+    // Visual feedback
+    const row = e.currentTarget as HTMLElement;
+    row.style.borderTop = dragFrom.current < i ? "" : "2px solid var(--blue)";
+    row.style.borderBottom = dragFrom.current >= i ? "" : "2px solid var(--blue)";
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    const row = e.currentTarget as HTMLElement;
+    row.style.borderTop = "";
+    row.style.borderBottom = "";
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const row = e.currentTarget as HTMLElement;
+    row.style.borderTop = "";
+    row.style.borderBottom = "";
+    if (dragKey.current && dragFrom.current !== -1 && dragOverIdx.current !== -1) {
+      moveArr(dragKey.current, dragFrom.current, dragOverIdx.current);
+    }
+    dragKey.current = "";
+    dragFrom.current = -1;
+    dragOverIdx.current = -1;
+  };
+
+  /* ── Section order ── */
+
+  const sectionOrder = (frontmatter.sectionOrder as string[]) || DEFAULT_SECTION_ORDER;
+
+  const moveSectionOrder = (from: number, to: number) => {
+    if (from === to) return;
+    const arr = [...sectionOrder];
+    const [item] = arr.splice(from, 1);
+    arr.splice(to, 0, item);
+    updateFM("sectionOrder", arr);
+  };
+
+  // Tab drag state (refs to avoid re-renders)
+  const tabDragFrom = useRef(-1);
+  const tabDragOverIdx = useRef(-1);
+
+  const onTabDragStart = (sectionIdx: number) => {
+    tabDragFrom.current = sectionIdx;
+  };
+
+  const onTabDragOver = (e: React.DragEvent, sectionIdx: number) => {
+    e.preventDefault();
+    tabDragOverIdx.current = sectionIdx;
+    const el = e.currentTarget as HTMLElement;
+    el.style.borderLeft = tabDragFrom.current > sectionIdx ? "2px solid var(--blue)" : "";
+    el.style.borderRight = tabDragFrom.current <= sectionIdx ? "2px solid var(--blue)" : "";
+  };
+
+  const onTabDragLeave = (e: React.DragEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    el.style.borderLeft = "";
+    el.style.borderRight = "";
+  };
+
+  const onTabDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const el = e.currentTarget as HTMLElement;
+    el.style.borderLeft = "";
+    el.style.borderRight = "";
+    if (tabDragFrom.current !== -1 && tabDragOverIdx.current !== -1) {
+      moveSectionOrder(tabDragFrom.current, tabDragOverIdx.current);
+    }
+    tabDragFrom.current = -1;
+    tabDragOverIdx.current = -1;
+  };
 
   /* ── Preview ── */
 
@@ -430,11 +547,215 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
     { key: "preview", label: "Aperçu" },
   ];
 
+  /* ── Section preview renderers ── */
+
+  const renderHeadline = (text: string) =>
+    text.replace(/\*([^*]+)\*/g, '<em class="hl-accent">$1</em>');
+
+  const previewGeneral = () => (
+    <div className="hero">
+      <div className="hero-role">{frontmatter.role || "RÔLE"}</div>
+      <div className="hero-name">{frontmatter.name || "Nom"}</div>
+      <p className="hero-headline" dangerouslySetInnerHTML={{ __html: renderHeadline(frontmatter.headline || "Headline") }} />
+      <div className="hero-bio">{frontmatter.bio || "Bio"}</div>
+    </div>
+  );
+
+  const previewSkills = () => (
+    <div>
+      <h3 className="section-title">Compétences<span className="dot">.</span></h3>
+      {(frontmatter.skillsDesc as string) && <p className="section-desc">{frontmatter.skillsDesc as string}</p>}
+      <div className="skills">
+        {(frontmatter.skills || []).map((s, i) => (
+          <div key={i} className="skill">
+            <div className="skill-name">{s.name || "—"}</div>
+            <div className="skill-details">{s.details || "—"}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const previewProjects = () => (
+    <div>
+      <h3 className="section-title">Projets<span className="dot">.</span></h3>
+      {(frontmatter.projectsDesc as string) && <p className="section-desc">{frontmatter.projectsDesc as string}</p>}
+      <div className="projects-list">
+        {(frontmatter.projects || []).map((p, i) => (
+          <div key={i} className="project">
+            <span className="project-num">{String(i + 1).padStart(2, "0")}</span>
+            <div>
+              <div className="project-title">{p.title || "—"}<span className="dot">.</span></div>
+              <div className="project-desc">{p.description || "—"}</div>
+            </div>
+            {p.tags && p.tags.length > 0 && (
+              <div className="project-tags">
+                {p.tags.map((t, ti) => <span key={ti} className="tag">{t}</span>)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const previewStats = () => {
+    const stats = frontmatter.stats || [];
+    return (
+      <div>
+        <h3 className="section-title">Chiffres clés<span className="dot">.</span></h3>
+        {(frontmatter.statsDesc as string) && <p className="section-desc">{frontmatter.statsDesc as string}</p>}
+        <div className="stats" style={{ gridTemplateColumns: `repeat(${stats.length || 1}, 1fr)` }}>
+          {stats.map((s, i) => (
+            <div key={i}>
+              <div className="stat-value">{s.value || "—"}</div>
+              <div className="stat-label">{s.label || "—"}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const sectionPreviews: Record<string, () => React.ReactNode> = {
+    general: previewGeneral,
+    skills: previewSkills,
+    projects: previewProjects,
+    stats: previewStats,
+  };
+
+  /* ── Form renderers (shared by edit + split) ── */
+
+  const renderGeneralForm = () => (
+    <div className="yaml-grid">
+      <div>
+        <label className="yaml-label">Nom</label>
+        <input value={frontmatter.name || ""} onChange={e => updateFM("name", e.target.value)} className="yaml-input" />
+      </div>
+      <div>
+        <label className="yaml-label">Rôle</label>
+        <input value={frontmatter.role || ""} onChange={e => updateFM("role", e.target.value)} className="yaml-input" />
+      </div>
+      <div className="yaml-full">
+        <label className="yaml-label">Headline</label>
+        <input value={frontmatter.headline || ""} onChange={e => updateFM("headline", e.target.value)} className="yaml-input" />
+      </div>
+      <div className="yaml-full">
+        <label className="yaml-label">Bio</label>
+        <textarea value={frontmatter.bio || ""} onChange={e => updateFM("bio", e.target.value)} rows={2} className="yaml-input yaml-textarea" />
+      </div>
+      <div className="yaml-full">
+        <label className="yaml-label">Description section Parcours</label>
+        <input value={(frontmatter.parcoursDesc as string) || ""} onChange={e => updateFM("parcoursDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Parcours" />
+      </div>
+    </div>
+  );
+
+  const renderSkillsForm = () => (
+    <div>
+      <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
+        <label className="yaml-label">Description section</label>
+        <input value={(frontmatter.skillsDesc as string) || ""} onChange={e => updateFM("skillsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Compétences" />
+      </div>
+      {(frontmatter.skills || []).map((s, i) => (
+        <div key={i} className="yaml-arr-row yaml-arr-row--skills" data-drag-row
+          onDragStart={() => onDragStart("skills", i)} onDragEnd={onDragEnd}
+          onDragOver={(e) => onDragOver(e, i)} onDragLeave={onDragLeave} onDrop={onDrop}
+        >
+          <span className="yaml-drag-handle" onMouseDown={onGripDown} onMouseUp={clearDraggable}><GripVertical size={14} /></span>
+          <input value={s.name || ""} onChange={e => updateArr("skills", i, "name", e.target.value)} placeholder="Nom" className="yaml-input" />
+          <input value={s.details || ""} onChange={e => updateArr("skills", i, "details", e.target.value)} placeholder="Détails" className="yaml-input" />
+          <div className="yaml-row-actions">
+            <button onClick={() => i > 0 && moveArr("skills", i, i - 1)} disabled={i === 0} className="yaml-move-btn" title="Monter"><ChevronUp size={14} /></button>
+            <button onClick={() => i < (frontmatter.skills || []).length - 1 && moveArr("skills", i, i + 1)} disabled={i >= (frontmatter.skills || []).length - 1} className="yaml-move-btn" title="Descendre"><ChevronDown size={14} /></button>
+            <button onClick={() => removeArr("skills", i)} className="yaml-remove-btn">×</button>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => addArr("skills", { name: "", details: "" })} className="yaml-add-btn">+ Skill</button>
+    </div>
+  );
+
+  const renderProjectsForm = () => (
+    <div>
+      <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
+        <label className="yaml-label">Description section</label>
+        <input value={(frontmatter.projectsDesc as string) || ""} onChange={e => updateFM("projectsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Projets" />
+      </div>
+      {(frontmatter.projects || []).map((p, i) => (
+        <div key={i} className="yaml-project-card" data-drag-row
+          onDragStart={() => onDragStart("projects", i)} onDragEnd={onDragEnd}
+          onDragOver={(e) => onDragOver(e, i)} onDragLeave={onDragLeave} onDrop={onDrop}
+        >
+          <div className="yaml-arr-row yaml-arr-row--title">
+            <span className="yaml-drag-handle" onMouseDown={onGripDown} onMouseUp={clearDraggable}><GripVertical size={14} /></span>
+            <input value={p.title || ""} onChange={e => updateArr("projects", i, "title", e.target.value)} className="yaml-input yaml-input--bold" placeholder="Titre" />
+            <div className="yaml-row-actions">
+              <button onClick={() => i > 0 && moveArr("projects", i, i - 1)} disabled={i === 0} className="yaml-move-btn" title="Monter"><ChevronUp size={14} /></button>
+              <button onClick={() => i < (frontmatter.projects || []).length - 1 && moveArr("projects", i, i + 1)} disabled={i >= (frontmatter.projects || []).length - 1} className="yaml-move-btn" title="Descendre"><ChevronDown size={14} /></button>
+              <button onClick={() => removeArr("projects", i)} className="yaml-remove-btn">×</button>
+            </div>
+          </div>
+          <input value={p.description || ""} onChange={e => updateArr("projects", i, "description", e.target.value)} className="yaml-input" placeholder="Description" />
+          <div className="yaml-arr-row yaml-arr-row--meta">
+            <input
+              value={Array.isArray(p.tags) ? p.tags.join(", ") : ""}
+              onChange={e => updateArr("projects", i, "tags", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+              placeholder="Tags (virgules)"
+              className="yaml-input"
+            />
+            <input value={p.blog || ""} onChange={e => updateArr("projects", i, "blog", e.target.value)} placeholder="Blog slug" className="yaml-input yaml-input--sm" />
+            <input value={p.docs || ""} onChange={e => updateArr("projects", i, "docs", e.target.value)} placeholder="Docs projet" className="yaml-input yaml-input--sm" />
+          </div>
+        </div>
+      ))}
+      <button onClick={() => addArr("projects", { title: "", description: "", tags: [] })} className="yaml-add-btn">+ Projet</button>
+    </div>
+  );
+
+  const renderStatsForm = () => (
+    <div>
+      <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
+        <label className="yaml-label">Description section</label>
+        <input value={(frontmatter.statsDesc as string) || ""} onChange={e => updateFM("statsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Chiffres clés" />
+      </div>
+      {(frontmatter.stats || []).map((s, i) => (
+        <div key={i} className="yaml-arr-row yaml-arr-row--stats" data-drag-row
+          onDragStart={() => onDragStart("stats", i)} onDragEnd={onDragEnd}
+          onDragOver={(e) => onDragOver(e, i)} onDragLeave={onDragLeave} onDrop={onDrop}
+        >
+          <span className="yaml-drag-handle" onMouseDown={onGripDown} onMouseUp={clearDraggable}><GripVertical size={14} /></span>
+          <input value={s.value || ""} onChange={e => updateArr("stats", i, "value", e.target.value)} className="yaml-input yaml-input--value" placeholder="Valeur" />
+          <input value={s.label || ""} onChange={e => updateArr("stats", i, "label", e.target.value)} className="yaml-input" placeholder="Label" />
+          <div className="yaml-row-actions">
+            <button onClick={() => i > 0 && moveArr("stats", i, i - 1)} disabled={i === 0} className="yaml-move-btn" title="Monter"><ChevronUp size={14} /></button>
+            <button onClick={() => i < (frontmatter.stats || []).length - 1 && moveArr("stats", i, i + 1)} disabled={i >= (frontmatter.stats || []).length - 1} className="yaml-move-btn" title="Descendre"><ChevronDown size={14} /></button>
+            <button onClick={() => removeArr("stats", i)} className="yaml-remove-btn">×</button>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => addArr("stats", { value: "", label: "" })} className="yaml-add-btn">+ Stat</button>
+    </div>
+  );
+
+  const renderCurrentForm = () => {
+    if (yamlTab === "general") return renderGeneralForm();
+    if (yamlTab === "skills") return renderSkillsForm();
+    if (yamlTab === "projects") return renderProjectsForm();
+    if (yamlTab === "stats") return renderStatsForm();
+    return null;
+  };
+
+  const sectionLabels: Record<string, string> = {
+    skills: `Skills (${(frontmatter.skills || []).length})`,
+    projects: `Projets (${(frontmatter.projects || []).length})`,
+    stats: `Stats (${(frontmatter.stats || []).length})`,
+    parcours: "Parcours",
+  };
+
   const yamlTabs: Array<[string, string]> = [
     ["general", "Général"],
-    ["skills", `Skills (${(frontmatter.skills || []).length})`],
-    ["projects", `Projets (${(frontmatter.projects || []).length})`],
-    ["stats", `Stats (${(frontmatter.stats || []).length})`],
+    ...sectionOrder.map(s => [s, sectionLabels[s] || s] as [string, string]),
   ];
 
   return (
@@ -458,151 +779,86 @@ export default function PortfolioEditor({ content, cancelUrl, saveUrl }: Props) 
         </div>
       </div>
 
-      {/* YAML tabs */}
-      <div className="yaml-section">
+      {/* Section tabs */}
+      <div className={`yaml-section${yamlTab !== "parcours" ? " yaml-section--expanded" : ""}`}>
         <div className="yaml-tabs">
-          <span className="yaml-tabs-label">YAML</span>
-          {yamlTabs.map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setYamlTab(id)}
-              className={`yaml-tab${yamlTab === id ? " active" : ""}`}
-            >
-              {label}
-            </button>
-          ))}
+          {yamlTabs.map(([id, label]) => {
+            const secIdx = sectionOrder.indexOf(id);
+            const isDraggable = secIdx !== -1;
+            return (
+              <button
+                key={id}
+                onClick={() => setYamlTab(id)}
+                className={`yaml-tab${yamlTab === id ? " active" : ""}${isDraggable ? " yaml-tab--draggable" : ""}`}
+                draggable={isDraggable || undefined}
+                onDragStart={isDraggable ? () => onTabDragStart(secIdx) : undefined}
+                onDragOver={isDraggable ? (e: React.DragEvent) => onTabDragOver(e, secIdx) : undefined}
+                onDragLeave={isDraggable ? onTabDragLeave : undefined}
+                onDrop={isDraggable ? onTabDrop : undefined}
+              >
+                {isDraggable && <GripVertical size={11} className="tab-grip" />}
+                {label}
+              </button>
+            );
+          })}
         </div>
-        <div className="yaml-form">
-          {yamlTab === "general" && (
-            <div className="yaml-grid">
-              <div>
-                <label className="yaml-label">Nom</label>
-                <input value={frontmatter.name || ""} onChange={e => updateFM("name", e.target.value)} className="yaml-input" />
-              </div>
-              <div>
-                <label className="yaml-label">Rôle</label>
-                <input value={frontmatter.role || ""} onChange={e => updateFM("role", e.target.value)} className="yaml-input" />
-              </div>
-              <div className="yaml-full">
-                <label className="yaml-label">Headline</label>
-                <input value={frontmatter.headline || ""} onChange={e => updateFM("headline", e.target.value)} className="yaml-input" />
-              </div>
-              <div className="yaml-full">
-                <label className="yaml-label">Bio</label>
-                <textarea value={frontmatter.bio || ""} onChange={e => updateFM("bio", e.target.value)} rows={2} className="yaml-input yaml-textarea" />
-              </div>
-              <div className="yaml-full">
-                <label className="yaml-label">Description section Parcours</label>
-                <input value={(frontmatter.parcoursDesc as string) || ""} onChange={e => updateFM("parcoursDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Parcours" />
-              </div>
-            </div>
-          )}
-
-          {yamlTab === "skills" && (
-            <div>
-              <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
-                <label className="yaml-label">Description section</label>
-                <input value={(frontmatter.skillsDesc as string) || ""} onChange={e => updateFM("skillsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Compétences" />
-              </div>
-              {(frontmatter.skills || []).map((s, i) => (
-                <div key={i} className="yaml-arr-row yaml-arr-row--skills">
-                  <input value={s.name || ""} onChange={e => updateArr("skills", i, "name", e.target.value)} placeholder="Nom" className="yaml-input" />
-                  <input value={s.details || ""} onChange={e => updateArr("skills", i, "details", e.target.value)} placeholder="Détails" className="yaml-input" />
-                  <button onClick={() => removeArr("skills", i)} className="yaml-remove-btn">×</button>
-                </div>
-              ))}
-              <button onClick={() => addArr("skills", { name: "", details: "" })} className="yaml-add-btn">+ Skill</button>
-            </div>
-          )}
-
-          {yamlTab === "projects" && (
-            <div>
-              <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
-                <label className="yaml-label">Description section</label>
-                <input value={(frontmatter.projectsDesc as string) || ""} onChange={e => updateFM("projectsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Projets" />
-              </div>
-              {(frontmatter.projects || []).map((p, i) => (
-                <div key={i} className="yaml-project-card">
-                  <div className="yaml-arr-row yaml-arr-row--title">
-                    <input value={p.title || ""} onChange={e => updateArr("projects", i, "title", e.target.value)} className="yaml-input yaml-input--bold" placeholder="Titre" />
-                    <button onClick={() => removeArr("projects", i)} className="yaml-remove-btn">×</button>
-                  </div>
-                  <input value={p.description || ""} onChange={e => updateArr("projects", i, "description", e.target.value)} className="yaml-input" placeholder="Description" />
-                  <div className="yaml-arr-row yaml-arr-row--meta">
-                    <input
-                      value={Array.isArray(p.tags) ? p.tags.join(", ") : ""}
-                      onChange={e => updateArr("projects", i, "tags", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
-                      placeholder="Tags (virgules)"
-                      className="yaml-input"
-                    />
-                    <input value={p.blog || ""} onChange={e => updateArr("projects", i, "blog", e.target.value)} placeholder="Blog slug" className="yaml-input yaml-input--sm" />
-                    <input value={p.docs || ""} onChange={e => updateArr("projects", i, "docs", e.target.value)} placeholder="Docs projet" className="yaml-input yaml-input--sm" />
-                  </div>
-                </div>
-              ))}
-              <button onClick={() => addArr("projects", { title: "", description: "", tags: [] })} className="yaml-add-btn">+ Projet</button>
-            </div>
-          )}
-
-          {yamlTab === "stats" && (
-            <div>
-              <div className="yaml-full" style={{ marginBottom: "0.8rem" }}>
-                <label className="yaml-label">Description section</label>
-                <input value={(frontmatter.statsDesc as string) || ""} onChange={e => updateFM("statsDesc", e.target.value)} className="yaml-input" placeholder="Description affichée sous le titre Chiffres clés" />
-              </div>
-              {(frontmatter.stats || []).map((s, i) => (
-                <div key={i} className="yaml-arr-row yaml-arr-row--stats">
-                  <input value={s.value || ""} onChange={e => updateArr("stats", i, "value", e.target.value)} className="yaml-input yaml-input--value" placeholder="Valeur" />
-                  <input value={s.label || ""} onChange={e => updateArr("stats", i, "label", e.target.value)} className="yaml-input" placeholder="Label" />
-                  <button onClick={() => removeArr("stats", i)} className="yaml-remove-btn">×</button>
-                </div>
-              ))}
-              <button onClick={() => addArr("stats", { value: "", label: "" })} className="yaml-add-btn">+ Stat</button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="editor-toolbar">
-        {tb.map((item, i) =>
-          item.sep ? (
-            <div key={i} className="editor-toolbar-sep" />
-          ) : (
-            <button
-              key={i}
-              onClick={item.a}
-              title={item.label}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "color-mix(in srgb, var(--blue) 10%, transparent)";
-                e.currentTarget.style.color = "var(--blue-hover)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "var(--tertiary)";
-              }}
-              className="editor-toolbar-btn"
-            >
-              {item.icon}
-            </button>
-          )
+        {yamlTab !== "parcours" && mode === "edit" && (
+          <div className="yaml-form">{renderCurrentForm()}</div>
+        )}
+        {yamlTab !== "parcours" && mode === "preview" && sectionPreviews[yamlTab] && (
+          <div className="yaml-form yaml-page-preview">{sectionPreviews[yamlTab]()}</div>
+        )}
+        {yamlTab !== "parcours" && mode === "split" && (
+          <div className="yaml-split">
+            <div className="yaml-form yaml-split-form">{renderCurrentForm()}</div>
+            <div className="yaml-form yaml-split-preview yaml-page-preview">{sectionPreviews[yamlTab] && sectionPreviews[yamlTab]()}</div>
+          </div>
         )}
       </div>
 
-      {/* Editor area */}
-      <div className={`editor-area mdx-editor-area editor-area--${mode}`}>
-        {mode !== "preview" && (
-          <HighlightedTextarea
-            defaultValue={initialBody}
-            onInput={updatePreview}
-            onScroll={mode === "split" ? syncPreviewScroll : undefined}
-            style={{ borderRight: mode === "split" ? "1px solid var(--line)" : "none" }}
-          />
-        )}
-        {mode !== "edit" && (
-          <div ref={previewRef} className={`md-body editor-preview${mode === "preview" ? " editor-preview--full" : ""}`} />
-        )}
-      </div>
+      {/* Toolbar + Editor — only in Parcours mode */}
+      {yamlTab === "parcours" && (
+        <>
+          <div className="editor-toolbar">
+            {tb.map((item, i) =>
+              item.sep ? (
+                <div key={i} className="editor-toolbar-sep" />
+              ) : (
+                <button
+                  key={i}
+                  onClick={item.a}
+                  title={item.label}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "color-mix(in srgb, var(--blue) 10%, transparent)";
+                    e.currentTarget.style.color = "var(--blue-hover)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--tertiary)";
+                  }}
+                  className="editor-toolbar-btn"
+                >
+                  {item.icon}
+                </button>
+              )
+            )}
+          </div>
+
+          <div className={`editor-area mdx-editor-area editor-area--${mode}`}>
+            {mode !== "preview" && (
+              <HighlightedTextarea
+                defaultValue={initialBody}
+                onInput={updatePreview}
+                onScroll={mode === "split" ? syncPreviewScroll : undefined}
+                style={{ borderRight: mode === "split" ? "1px solid var(--line)" : "none" }}
+              />
+            )}
+            {mode !== "edit" && (
+              <div ref={handlePreviewRef} className={`md-body editor-preview${mode === "preview" ? " editor-preview--full" : ""}`} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
