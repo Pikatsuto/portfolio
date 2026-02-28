@@ -20,7 +20,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // --- API mutation protection ---
   // GET requests to public API routes are allowed without auth
   // All other API methods require auth (except login)
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/login") && !pathname.startsWith("/api/contact/submit")) {
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/") && !pathname.startsWith("/api/contact/submit")) {
     const method = context.request.method;
     if (method !== "GET" && !authenticated) {
       return new Response(JSON.stringify({ error: "Non authentifié" }), {
@@ -52,11 +52,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response.headers.set("X-Robots-Tag", "noindex");
   }
 
-  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'");
+  // Security headers are set by Traefik in production (see docker-compose.yml)
 
   return response;
 });

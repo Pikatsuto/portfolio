@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { getSessionFromCookie, destroySession } from "../../../lib/auth";
+import { sessionCookie } from "../../../lib/cookie";
 
 export const POST: APIRoute = async ({ request }) => {
   const cookie = request.headers.get("cookie");
@@ -13,7 +14,7 @@ export const POST: APIRoute = async ({ request }) => {
     status: 200,
     headers: {
       "Content-Type": "application/json",
-      "Set-Cookie": "session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+      "Set-Cookie": sessionCookie("", 0),
     },
   });
 };
