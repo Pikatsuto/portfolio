@@ -300,6 +300,16 @@ textarea::-webkit-scrollbar-thumb {
   font-style: italic;
 }
 
+.md-body a {
+  color: var(--blue);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.md-body a:hover {
+  color: var(--blue-hover);
+}
+
 .md-body .md-inline-code {
   background: var(--code-bg);
   border: 1px solid var(--line);

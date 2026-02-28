@@ -496,6 +496,167 @@ const sectionOrders: Record<string, string[]> = {
   "isol-app": ["Démarrage", "Architecture"],
 };
 
+// ─── Legal pages MDX ───
+
+const mentionsLegalesMDX = `---
+owner: Gabriel Guillou
+address: "[ADRESSE COMPLÈTE]"
+phone: "[TÉLÉPHONE]"
+email: "[EMAIL DE CONTACT]"
+host: Hébergement personnel (selfhosted)
+hostAddress: "[ADRESSE DU SERVEUR]"
+---
+
+## Éditeur du site
+
+Le présent site est édité par **{{owner}}**, personne physique.
+
+- **Adresse** : {{address}}
+- **Téléphone** : {{phone}}
+- **Email** : {{email}}
+
+## Hébergement
+
+Le site est hébergé sur un serveur personnel (selfhosted) situé en France.
+
+- **Hébergeur** : {{owner}} (hébergement personnel)
+- **Adresse du serveur** : {{hostAddress}}
+
+## Propriété intellectuelle
+
+Le contenu rédactionnel de ce site (textes, design, images originales) est la propriété de {{owner}}, sauf mention contraire. Toute reproduction, représentation ou diffusion de ce contenu sans autorisation expresse est interdite (articles L.335-2 et suivants du Code de la propriété intellectuelle).
+
+Le code source de ce site est distribué sous licence **GNU General Public License v3.0** (GPL-3.0). Vous êtes libre de le copier, le modifier et le redistribuer selon les termes de cette licence, consultable dans le fichier [LICENSE](https://github.com/Pikatsuto/portfolio/blob/main/LICENSE) du dépôt. Le code source des autres projets présentés est soumis à leurs licences respectives.
+
+## Contenus et responsabilité
+
+Les informations publiées sur ce site sont fournies à titre indicatif et sont susceptibles d'être modifiées à tout moment. L'éditeur ne saurait être tenu responsable des erreurs, omissions, ou des résultats obtenus suite à l'utilisation de ces informations.
+
+## Liens externes
+
+Ce site peut contenir des liens vers des sites tiers (GitHub, LinkedIn, etc.). L'éditeur n'exerce aucun contrôle sur ces sites et décline toute responsabilité quant à leur contenu ou leurs pratiques en matière de protection des données.
+
+## Crédits
+
+- **Conception et développement** : {{owner}}
+- **Polices** : Source Serif 4, DM Sans, JetBrains Mono (licences SIL Open Font / Apache 2.0)
+- **Icônes** : [Lucide](https://lucide.dev/) (licence ISC)
+
+## Contact
+
+Pour toute question relative au site, vous pouvez utiliser le [formulaire de contact](/contact) ou écrire à l'adresse email indiquée ci-dessus.`;
+
+const politiqueConfidentialiteMDX = `---
+responsible: Gabriel Guillou
+email: "[EMAIL DE CONTACT]"
+dataRetention: 12 mois après le dernier contact
+lastUpdated: "${new Date().toISOString().split("T")[0]}"
+---
+
+## Responsable du traitement
+
+Le responsable du traitement des données personnelles collectées sur ce site est :
+
+- **Nom** : {{responsible}}
+- **Email** : {{email}}
+- **Adresse** : voir les [mentions légales](/mentions-legales)
+
+## Données personnelles collectées
+
+Les seules données personnelles collectées sur ce site proviennent du **formulaire de contact**. Les données collectées sont :
+
+| Donnée | Obligatoire | Finalité |
+|--------|:-----------:|----------|
+| Nom | Oui | Identifier l'expéditeur |
+| Email | Oui | Pouvoir répondre au message |
+| Objet | Oui | Catégoriser la demande |
+| Message | Oui | Contenu de la demande |
+
+**Aucune autre donnée personnelle n'est collectée.** Ce site n'utilise aucun outil d'analyse, de tracking, de publicité ou de réseau social tiers.
+
+## Finalité du traitement
+
+Les données collectées via le formulaire de contact sont utilisées uniquement pour :
+
+- Répondre aux demandes et messages des visiteurs
+- Assurer le suivi des échanges
+
+## Base légale
+
+Le traitement des données est fondé sur le **consentement** de l'utilisateur (article 6.1.a du RGPD), manifesté par l'envoi volontaire du formulaire de contact.
+
+## Destinataires des données
+
+Les données collectées sont accessibles uniquement par {{responsible}}, éditeur du site.
+
+Les réponses aux messages sont envoyées via **Gmail** (Google LLC). Google agit en tant que sous-traitant pour l'acheminement des emails et est soumis à sa [politique de confidentialité](https://policies.google.com/privacy). En dehors de ce service, aucune donnée n'est transmise à un tiers.
+
+## Durée de conservation
+
+Les messages sont conservés pendant **{{dataRetention}}** après le dernier échange. Ils peuvent être supprimés à tout moment par l'administrateur du site, ou sur demande de la personne concernée.
+
+## Droits des utilisateurs
+
+Conformément au RGPD (articles 15 à 21), vous disposez des droits suivants :
+
+- **Droit d'accès** : obtenir la confirmation que des données vous concernant sont traitées et en obtenir une copie
+- **Droit de rectification** : corriger des données inexactes ou incomplètes
+- **Droit d'effacement** : demander la suppression de vos données
+- **Droit à la portabilité** : recevoir vos données dans un format structuré et lisible
+- **Droit d'opposition** : vous opposer au traitement de vos données
+- **Droit de retrait du consentement** : retirer votre consentement à tout moment
+
+Pour exercer ces droits, contactez-nous via le [formulaire de contact](/contact) ou par email à l'adresse indiquée ci-dessus.
+
+En cas de litige, vous pouvez introduire une réclamation auprès de la **CNIL** (Commission Nationale de l'Informatique et des Libertés) : [www.cnil.fr](https://www.cnil.fr/).
+
+## Cookies
+
+Ce site utilise un seul cookie :
+
+| Cookie | Type | Durée | Finalité |
+|--------|------|-------|----------|
+| \`session\` | Strictement nécessaire | 24 heures | Authentification de l'administrateur |
+
+Ce cookie est de type **HttpOnly** (inaccessible au JavaScript), **SameSite=Lax** et **Secure** (transmis uniquement en HTTPS). Il ne contient aucune donnée personnelle et ne sert qu'à maintenir la session de l'administrateur du site.
+
+**Aucun cookie de tracking, d'analyse ou publicitaire n'est utilisé.**
+
+Conformément à la réglementation, les cookies strictement nécessaires au fonctionnement du site ne requièrent pas de consentement préalable.
+
+### Comment supprimer les cookies
+
+Vous pouvez à tout moment supprimer les cookies depuis les paramètres de votre navigateur :
+
+- **Chrome** : Paramètres → Confidentialité et sécurité → Cookies
+- **Firefox** : Paramètres → Vie privée et sécurité → Cookies
+- **Safari** : Préférences → Confidentialité → Gérer les données
+- **Edge** : Paramètres → Cookies et autorisations de site
+
+## Sécurité
+
+Ce site met en œuvre les mesures de sécurité suivantes :
+
+- **HTTPS** avec certificat TLS et HSTS (HTTP Strict Transport Security)
+- **Content Security Policy** (CSP) restrictive
+- Protection anti-bot par **Proof-of-Work** (SHA-256) sur le formulaire de contact
+- **Rate limiting** sur les soumissions de formulaire
+- Aucun mot de passe utilisateur n'est collecté ou stocké
+
+## Transfert hors Union européenne
+
+Les données stockées sur le serveur restent en France. Toutefois, les réponses par email transitent via Gmail (Google LLC), dont les serveurs peuvent se situer hors de l'Union européenne. Google adhère au [Data Privacy Framework](https://www.dataprivacyframework.gov/) (EU-US) et propose des clauses contractuelles types conformes au RGPD.
+
+## Hébergement
+
+Le site est hébergé sur un serveur personnel (selfhosted) situé en France. Les données sont stockées dans une base de données SQLite locale.
+
+## Modification de cette politique
+
+Cette politique de confidentialité peut être mise à jour à tout moment. La date de dernière modification est indiquée ci-dessous. En cas de modification substantielle, un avis sera affiché sur le site.
+
+**Dernière mise à jour** : {{lastUpdated}}`;
+
 // ─── Seed execution ───
 
 console.log("Seeding database...");
@@ -590,6 +751,24 @@ sqlite.exec(`
     created_at TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    draft TEXT,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS pages_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_id INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -601,12 +780,14 @@ sqlite.exec(`
   DELETE FROM post_history;
   DELETE FROM doc_history;
   DELETE FROM portfolio_history;
+  DELETE FROM pages_history;
   DELETE FROM docs;
   DELETE FROM posts;
   DELETE FROM sections;
   DELETE FROM categories;
   DELETE FROM projects;
   DELETE FROM portfolio;
+  DELETE FROM pages;
   DELETE FROM settings;
 `);
 
@@ -758,6 +939,24 @@ for (let i = 0; i < defaultDocs.length; i++) {
   }
 }
 console.log(`  Docs: ${defaultDocs.length} rows`);
+
+// Insert pages
+const defaultPages = [
+  { slug: "mentions-legales", title: "Mentions légales", content: mentionsLegalesMDX },
+  { slug: "politique-de-confidentialite", title: "Politique de confidentialité", content: politiqueConfidentialiteMDX },
+];
+for (const page of defaultPages) {
+  db.insert(schema.pages)
+    .values({
+      slug: page.slug,
+      title: page.title,
+      content: page.content,
+      draft: null,
+      updatedAt: now,
+    })
+    .run();
+}
+console.log(`  Pages: ${defaultPages.length} rows`);
 
 // Insert settings
 db.insert(schema.settings)

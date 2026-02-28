@@ -1,0 +1,148 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DraftBadge from "../components/DraftBadge.astro";
+import EditButton from "../components/EditButton.astro";
+import GitHistory from "../components/GitHistory";
+import MermaidInit from "../components/MermaidInit.astro";
+import { db } from "../db";
+import { pages, pagesHistory } from "../db/schema";
+import { eq, desc } from "drizzle-orm";
+import { parseMDX, renderMarkdown, interpolate } from "../lib/markdown";
+
+const isAdmin = Astro.locals.isAdmin;
+const row = await db.select().from(pages).where(eq(pages.slug, "politique-de-confidentialite")).get();
+
+if (!row) {
+  return Astro.redirect("/");
+}
+
+const displayMdx = isAdmin && row.draft ? row.draft : row.content;
+const hasDraft = !!row.draft;
+const history = isAdmin
+  ? await db.select().from(pagesHistory).where(eq(pagesHistory.pageId, row.id)).orderBy(desc(pagesHistory.id)).all()
+  : [];
+const { frontmatter: fm, body } = parseMDX(displayMdx);
+const contentHtml = body ? await renderMarkdown(interpolate(body, fm)) : "";
+
+const pageLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Politique de confidentialité — Gabriel Guillou",
+  description: "Politique de confidentialité et protection des données personnelles du site gabriel-guillou.fr.",
+  url: new URL("/politique-de-confidentialite", Astro.site).href,
+});
+---
+
+<BaseLayout title="Politique de confidentialité" description="Politique de confidentialité et protection des données personnelles du site gabriel-guillou.fr.">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={pageLd} />
+  </Fragment>
+
+  {isAdmin && (hasDraft || history.length > 0) && (
+    <div class="page-draft-bar">
+      {hasDraft && <DraftBadge />}
+      {hasDraft && <span class="draft-msg">Des modifications non publiées sont en attente</span>}
+      <div class="draft-spacer" />
+      <GitHistory client:load history={history} restoreUrl={`/api/pages/politique-de-confidentialite/draft`} />
+      {hasDraft && (
+        <button class="draft-publish-btn" data-publish-url="/api/pages/politique-de-confidentialite/publish">Publier</button>
+      )}
+    </div>
+  )}
+
+  <article class="legal-page">
+    <header class="legal-header">
+      <h1 class="legal-title">Politique de confidentialité<span class="dot">.</span></h1>
+      {isAdmin && <EditButton href="/admin/pages/politique-de-confidentialite" />}
+    </header>
+    <div class="legal-content md-body" set:html={contentHtml} />
+  </article>
+  <MermaidInit />
+</BaseLayout>
+
+<script is:inline>
+  document.querySelectorAll(".draft-publish-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-publish-url");
+      const res = await fetch(url, { method: "POST" });
+      if (res.ok) window.location.reload();
+    });
+  });
+</script>
+
+<style>
+  .legal-page {
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+    padding: 3rem 3rem 5rem;
+  }
+
+  .legal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .legal-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: var(--fs-display);
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.15;
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .page-draft-bar {
+    background: color-mix(in srgb, var(--blue) 3%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--blue) 13%, transparent);
+    padding: 0.5rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .draft-spacer {
+    flex: 1;
+  }
+
+  .draft-msg {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--tertiary);
+  }
+
+  .draft-publish-btn {
+    background: var(--green);
+    border: none;
+    color: #fff;
+    padding: 0.35rem 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .draft-publish-btn:hover {
+    opacity: 0.9;
+  }
+
+  @media (max-width: 768px) {
+    .legal-page {
+      padding: 2rem 1.2rem 4rem;
+    }
+
+    .page-draft-bar {
+      padding: 0.5rem 1.2rem;
+    }
+
+    .draft-msg {
+      display: none;
+    }
+  }
+</style>

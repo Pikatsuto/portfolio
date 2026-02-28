@@ -22,6 +22,16 @@ export function parseMDX(mdx: string): ParsedMDX {
   };
 }
 
+// ─── Template interpolation ───
+
+/** Replace {{key}} placeholders with frontmatter values */
+export function interpolate(body: string, fm: Record<string, unknown>): string {
+  return body.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    const val = fm[key];
+    return typeof val === "string" ? val : `{{${key}}}`;
+  });
+}
+
 // ─── Shiki highlighter (cached singleton) ───
 
 const SUPPORTED_LANGS = [

@@ -1,0 +1,23 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PageEditor from "../../../components/PageEditor";
+import { db } from "../../../db";
+import { pages } from "../../../db/schema";
+import { eq } from "drizzle-orm";
+
+const { slug } = Astro.params;
+const row = await db.select().from(pages).where(eq(pages.slug, slug!)).get();
+if (!row) return Astro.redirect("/");
+
+const content = row.draft || row.content;
+---
+
+<BaseLayout title={`Éditer — ${row.title}`} fullHeight noindex>
+  <PageEditor
+    client:only="react"
+    content={content}
+    pageTitle={row.title}
+    saveUrl={`/api/pages/${slug}/draft`}
+    cancelUrl={`/${slug}`}
+  />
+</BaseLayout>

@@ -112,6 +112,28 @@ export const portfolioHistory = sqliteTable("portfolio_history", {
   createdAt: text("created_at").notNull(),
 });
 
+// --- Pages (static CMS pages: legal, privacy, etc.) ---
+
+export const pages = sqliteTable("pages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  draft: text("draft"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const pagesHistory = sqliteTable("pages_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  pageId: integer("page_id")
+    .notNull()
+    .references(() => pages.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
 // --- Messages (contact form submissions) ---
 
 export const messages = sqliteTable("messages", {
