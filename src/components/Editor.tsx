@@ -14,6 +14,8 @@ import {
 interface Props {
   content: string;
   title?: string;
+  excerpt?: string;
+  docProject?: string;
   saveUrl: string;
   cancelUrl: string;
   onTitleChange?: boolean;
@@ -26,9 +28,11 @@ const marked = new Marked({
   renderer: {
     heading({ text, depth }) {
       const id = text.toLowerCase().replace(/<[^>]*>/g, "").replace(/[^a-z0-9àâéèêëïîôùûüÿçœæ]+/g, "-").replace(/(^-|-$)/g, "");
-      if (depth === 2) return `<h2 class="md-h2" id="${id}">${text}</h2>`;
-      if (depth === 3) return `<h3 class="md-h3" id="${id}">${text}</h3>`;
-      return `<h${depth} id="${id}">${text}</h${depth}>`;
+      const dot = '<span class="dot">.</span>';
+      const level = Math.min(depth + 1, 6);
+      if (level === 2) return `<h2 class="md-h2" id="${id}">${text}${dot}</h2>`;
+      if (level === 3) return `<h3 class="md-h3" id="${id}">${text}${dot}</h3>`;
+      return `<h${level} id="${id}">${text}${dot}</h${level}>`;
     },
     code({ text, lang }) {
       if (lang === "mermaid") {
@@ -279,14 +283,22 @@ type TbItem = { icon: React.ReactNode; label: string; a: () => void; sep?: never
 /* ══════════════════════════════════════════
    Main Editor component
    ══════════════════════════════════════════ */
-export default function Editor({ content, title: initialTitle, saveUrl, cancelUrl, onTitleChange }: Props) {
+export default function Editor({ content, title: initialTitle, excerpt: initialExcerpt, docProject: initialDocProject, saveUrl, cancelUrl, onTitleChange }: Props) {
   const mdRef = useRef(content);
   const previewTimer = useRef(0);
   const isMobile = typeof window !== "undefined" && window.innerWidth <= 1280;
   const [mode, setMode] = useState<"edit" | "split" | "preview">(isMobile ? "edit" : "split");
   const [title, setTitle] = useState(initialTitle || "");
+  const [excerpt, setExcerpt] = useState(initialExcerpt ?? "");
+  const [docProject, setDocProject] = useState(initialDocProject ?? "");
   const [saving, setSaving] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Ref callback: render preview as soon as the div mounts
+  const handlePreviewRef = useCallback((el: HTMLDivElement | null) => {
+    previewRef.current = el;
+    if (el) renderToPreview(el, mdRef.current);
+  }, []);
 
   // Auto-switch to edit mode on small screens
   useEffect(() => {
@@ -298,7 +310,7 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Initial preview render + re-render when mode makes preview visible
+  // Re-render preview when mode changes (e.g. preview → split)
   useEffect(() => {
     if (mode !== "edit" && previewRef.current) {
       renderToPreview(previewRef.current, mdRef.current);
@@ -364,8 +376,10 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
   const handleSave = async () => {
     setSaving(true);
     try {
-      const body: Record<string, string> = { content: mdRef.current };
+      const body: Record<string, string | null> = { content: mdRef.current };
       if (onTitleChange && title) body.title = title;
+      if (initialExcerpt !== undefined) body.excerpt = excerpt;
+      if (initialDocProject !== undefined) body.docProject = docProject || null;
       const res = await fetch(saveUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -388,9 +402,21 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
       {/* Header */}
       <div className="editor-header">
         <div className="editor-header-left">
-          <span className="editor-label">Éditeur</span>
+          <span className="editor-label">Titre</span>
           {onTitleChange && (
             <input value={title} onChange={(e) => setTitle(e.target.value)} className="editor-title-input" />
+          )}
+          {initialExcerpt !== undefined && (
+            <div className="editor-meta-field">
+              <span className="editor-meta-label">Extrait</span>
+              <input value={excerpt} onChange={(e) => setExcerpt(e.target.value)} className="editor-meta-input" placeholder="Sous-titre / extrait" />
+            </div>
+          )}
+          {initialDocProject !== undefined && (
+            <div className="editor-meta-field">
+              <span className="editor-meta-label">Docs</span>
+              <input value={docProject} onChange={(e) => setDocProject(e.target.value)} className="editor-meta-input editor-meta-input--sm" placeholder="Nom du projet" />
+            </div>
           )}
         </div>
         <div className="editor-header-modes">
@@ -441,7 +467,7 @@ export default function Editor({ content, title: initialTitle, saveUrl, cancelUr
           />
         )}
         {mode !== "edit" && (
-          <div ref={previewRef} className={`md-body editor-preview${mode === "preview" ? " editor-preview--full" : ""}`} />
+          <div ref={handlePreviewRef} className={`md-body editor-preview${mode === "preview" ? " editor-preview--full" : ""}`} />
         )}
       </div>
     </div>
