@@ -8,4 +8,8 @@ export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
   integrations: [react()],
+  security: {
+    checkOrigin: true,
+    allowedDomains: [{ hostname: "gabriel-guillou.fr", protocol: "https" }],
+  },
 });
