@@ -33,7 +33,7 @@ const content = doc.draft || doc.content;
     content={content}
     title={doc.title}
     saveUrl={`/api/docs/${doc.id}/draft`}
-    cancelUrl={`/admin/docs?project=${encodeURIComponent(doc.project)}`}
+    cancelUrl={`/docs/${doc.project}/${doc.id}`}
     onTitleChange={true}
   />
 </BaseLayout>
