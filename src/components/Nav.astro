@@ -26,7 +26,7 @@ const links = [
   </div>
 )}
 
-<nav class="nav">
+<nav class="nav" aria-label="Navigation principale">
   <a href="/" class="logo">Gabriel Guillou<span class="logo-dot">.</span></a>
   <div class="nav-right">
     {!(maintenance && !isAdmin) && links.map(({ label, href }) => (

@@ -8,6 +8,7 @@ import { db } from "../../db";
 import { posts, categories, projects, docs, sections } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { renderMarkdown, extractTOC } from "../../lib/markdown";
+import { frDateToISO } from "../../lib/date";
 
 const isAdmin = Astro.locals.isAdmin;
 const { slug } = Astro.params;
@@ -58,7 +59,7 @@ const blogPostingLd = JSON.stringify({
   "@type": "BlogPosting",
   headline: post.title,
   description: post.excerpt || "",
-  datePublished: post.date || "",
+  datePublished: frDateToISO(post.date) || post.date || "",
   author: {
     "@type": "Person",
     name: "Gabriel Guillou",
@@ -81,7 +82,7 @@ const blogPostingLd = JSON.stringify({
         <span class="meta-dot" />
         <span class="article-info">{post.date} · {post.time}</span>
       </div>
-      <h1 class="article-title">{post.title}</h1>
+      <h1 class="article-title">{post.title}<span class="dot">.</span></h1>
       <p class="article-excerpt">{post.excerpt}</p>
       {post.docProject && (
         <a href={docProjectUrl} class="doc-link-btn">
@@ -91,12 +92,12 @@ const blogPostingLd = JSON.stringify({
     </div>
 
     {toc.length > 0 && (
-      <div class="toc">
+      <nav class="toc" aria-label="Sommaire">
         <div class="toc-title">Sommaire</div>
         {toc.map((t) => (
           <a href={`#${t.slug}`} class="toc-item">{t.text}</a>
         ))}
-      </div>
+      </nav>
     )}
 
     <div class="md-body" set:html={contentHtml} />
@@ -170,6 +171,10 @@ const blogPostingLd = JSON.stringify({
     font-family: 'DM Sans', sans-serif;
     font-size: var(--fs-sm);
     color: var(--tertiary);
+  }
+
+  .dot {
+    color: var(--blue);
   }
 
   .article-title {

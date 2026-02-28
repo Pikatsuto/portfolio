@@ -84,7 +84,7 @@ const breadcrumbLd = JSON.stringify({
 });
 ---
 
-<BaseLayout title={`${activeDoc.title} — Documentation ${proj.displayName || proj.name}`} description={`${activeDoc.title} — Documentation technique du projet ${proj.displayName || proj.name}. Guide et référence par Gabriel Guillou.`} fullHeight>
+<BaseLayout title={`${activeDoc.title} — Documentation ${proj.displayName || proj.name}`} description={`${activeDoc.title} — Documentation technique du projet ${proj.displayName || proj.name}. Guide et référence par Gabriel Guillou.`} ogImage={`/api/og?title=${encodeURIComponent(activeDoc.title)}&cat=${encodeURIComponent("Documentation " + (proj.displayName || proj.name))}`} fullHeight>
   <div class="docs-reader">
     <!-- Left sidebar -->
     <aside class="sidebar">
@@ -113,7 +113,7 @@ const breadcrumbLd = JSON.stringify({
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Main content -->
-    <main class="doc-content">
+    <div class="doc-content">
       <div class="breadcrumb">
         <a href={`/docs/${project}/${projectFirstDoc.id}`} class="bc-item bc-link">{proj.displayName || proj.name}</a>
         <Icon name="chevron-right" size={12} class="bc-sep" />
@@ -129,15 +129,15 @@ const breadcrumbLd = JSON.stringify({
           publishUrl={`/api/docs/${activeDoc.id}/publish`}
         />
       )}
-    </main>
+    </div>
 
     <!-- Right TOC -->
-    <aside class="toc-sidebar">
+    <nav class="toc-sidebar" aria-label="Sur cette page">
       <div class="toc-title">Sur cette page</div>
       {toc.map((t, i) => (
         <a href={`#${t.slug}`} class:list={["toc-item", { active: i === 0 }]}>{t.text}</a>
       ))}
-    </aside>
+    </nav>
   </div>
   {isAdmin && <EditButton href={`/admin/docs-edit?id=${activeDoc.id}`} />}
   <MermaidInit />

@@ -30,16 +30,34 @@ const query = db
 const allPosts = isAdmin
   ? await query.all()
   : await query.where(eq(posts.visible, true)).all();
+
+const collectionLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Articles techniques",
+  description: articlesSubtitle,
+  url: new URL("/articles", Astro.site).href,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: allPosts.filter((p) => p.visible).map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: new URL(`/articles/${p.id}`, Astro.site).href,
+      name: p.title,
+    })),
+  },
+});
 ---
 
 <BaseLayout title="Articles techniques — Blog de Gabriel Guillou" description="Articles techniques et retours d'expérience sur le DevOps, l'administration système et le développement full-stack par Gabriel Guillou.">
   <div class="blog-list">
     <div class="blog-header">
       <h1 class="blog-title">Articles<span class="dot">.</span></h1>
-      <h2 class="blog-subtitle">{articlesSubtitle}</h2>
+      <p class="blog-subtitle">{articlesSubtitle}</p>
       {articlesDesc && <p class="blog-desc">{articlesDesc}</p>}
     </div>
 
+    <h2 class="blog-section-title">Tous les articles<span class="dot">.</span></h2>
     {allPosts.map((p) => (
       <article class:list={["blog-article", { hidden: !p.visible }]}>
         <a href={`/articles/${p.id}`} class="article-link">
@@ -49,13 +67,14 @@ const allPosts = isAdmin
             <span class="article-date">{p.date}</span>
             {!p.visible && <span class="hidden-badge">masqué</span>}
           </div>
-          <h3 class="article-title">{p.title}</h3>
+          <h3 class="article-title">{p.title}<span class="dot">.</span></h3>
           <p class="article-excerpt">{p.excerpt}</p>
           <span class="article-time">{p.time}</span>
         </a>
       </article>
     ))}
   </div>
+  <script type="application/ld+json" set:html={collectionLd} />
 </BaseLayout>
 
 <style>
@@ -87,6 +106,7 @@ const allPosts = isAdmin
     color: var(--secondary);
     font-size: var(--fs-body);
     margin-bottom: 0.8rem;
+    font-weight: 400;
   }
 
   .blog-desc {
@@ -95,6 +115,16 @@ const allPosts = isAdmin
     font-size: var(--fs-sm);
     line-height: 1.7;
     max-width: 700px;
+  }
+
+  .blog-section-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: var(--fs-h2);
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line);
   }
 
   .blog-article {
@@ -163,7 +193,7 @@ const allPosts = isAdmin
 
   .article-title {
     font-family: 'Source Serif 4', serif;
-    font-size: var(--fs-h2);
+    font-size: var(--fs-h3);
     font-weight: 700;
     margin-bottom: 0.8rem;
     color: var(--white);

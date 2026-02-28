@@ -33,23 +33,42 @@ const projectStats = await Promise.all(
 );
 
 const projectsList = projectStats.filter((p) => p.firstId);
+
+const collectionLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Documentation technique",
+  description: docsSubtitle,
+  url: new URL("/docs", Astro.site).href,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: projectsList.map((proj, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: new URL(`/docs/${proj.name}/${proj.firstId}`, Astro.site).href,
+      name: proj.displayName,
+    })),
+  },
+});
 ---
 
 <BaseLayout title="Documentation technique — Projets de Gabriel Guillou" description="Documentation technique des projets open-source de Gabriel Guillou. Guides d'installation, architecture et références pour chaque projet.">
   <div class="docs-selector">
     <h1 class="docs-title">Documentation<span class="dot">.</span></h1>
-    <h2 class="docs-subtitle">{docsSubtitle}</h2>
+    <p class="docs-subtitle">{docsSubtitle}</p>
     {docsDesc && <p class="docs-desc">{docsDesc}</p>}
 
+    <h2 class="docs-section-title">Projets documentés<span class="dot">.</span></h2>
     <div class="project-grid">
       {projectsList.map((proj) => (
         <a href={`/docs/${proj.name}/${proj.firstId}`} class="project-card">
-          <h3 class="project-name">{proj.displayName}</h3>
+          <h3 class="project-name">{proj.displayName}<span class="dot">.</span></h3>
           <p class="project-info">{proj.count} pages · {proj.sectionCount} sections</p>
         </a>
       ))}
     </div>
   </div>
+  <script type="application/ld+json" set:html={collectionLd} />
 </BaseLayout>
 
 <style>
@@ -85,7 +104,17 @@ const projectsList = projectStats.filter((p) => p.firstId);
     font-size: var(--fs-sm);
     line-height: 1.7;
     max-width: 700px;
-    margin-bottom: 3rem;
+  }
+
+  .docs-section-title {
+    font-family: 'Source Serif 4', serif;
+    font-size: var(--fs-h2);
+    font-weight: 600;
+    color: var(--white);
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line);
   }
 
   .project-grid {
@@ -110,7 +139,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
 
   .project-name {
     font-family: 'Source Serif 4', serif;
-    font-size: var(--fs-h2);
+    font-size: var(--fs-h3);
     font-weight: 600;
     color: var(--white);
     margin-bottom: 0.4rem;

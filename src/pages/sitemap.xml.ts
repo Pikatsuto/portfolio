@@ -3,6 +3,7 @@ import { db } from "../db";
 import { posts, docs, sections, projects } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { isMaintenanceMode } from "../lib/auth";
+import { frDateToISO } from "../lib/date";
 
 export const GET: APIRoute = async ({ site }) => {
   // Return empty sitemap in maintenance mode
@@ -22,9 +23,11 @@ export const GET: APIRoute = async ({ site }) => {
     { url: "/docs", priority: "0.7", changefreq: "monthly" },
   ];
 
+  const today = new Date().toISOString().split("T")[0];
+
   // Published articles
   const allPosts = await db
-    .select({ id: posts.id })
+    .select({ id: posts.id, date: posts.date })
     .from(posts)
     .where(eq(posts.visible, true))
     .all();
@@ -44,15 +47,15 @@ export const GET: APIRoute = async ({ site }) => {
   const urls = [
     ...staticPages.map(
       (p) =>
-        `  <url>\n    <loc>${base}${p.url}</loc>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`,
+        `  <url>\n    <loc>${base}${p.url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`,
     ),
-    ...allPosts.map(
-      (p) =>
-        `  <url>\n    <loc>${base}/articles/${p.id}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`,
-    ),
+    ...allPosts.map((p) => {
+      const lastmod = frDateToISO(p.date) || today;
+      return `  <url>\n    <loc>${base}/articles/${p.id}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`;
+    }),
     ...allDocs.map(
       (d) =>
-        `  <url>\n    <loc>${base}/docs/${d.projectName}/${d.docId}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>`,
+        `  <url>\n    <loc>${base}/docs/${d.projectName}/${d.docId}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>`,
     ),
   ];
 
