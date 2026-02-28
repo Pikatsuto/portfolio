@@ -4,6 +4,8 @@ import { db } from "../../db";
 import { docs, sections, projects as projectsTable, settings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
+const docsSubtitleRow = await db.select().from(settings).where(eq(settings.key, "docsSubtitle")).get();
+const docsSubtitle = docsSubtitleRow?.value || "Guides techniques et références pour chaque projet.";
 const docsDescRow = await db.select().from(settings).where(eq(settings.key, "docsDesc")).get();
 const docsDesc = docsDescRow?.value || "";
 
@@ -36,7 +38,7 @@ const projectsList = projectStats.filter((p) => p.firstId);
 <BaseLayout title="Documentation technique — Projets de Gabriel Guillou" description="Documentation technique des projets open-source de Gabriel Guillou. Guides d'installation, architecture et références pour chaque projet.">
   <div class="docs-selector">
     <h1 class="docs-title">Documentation<span class="dot">.</span></h1>
-    <h2 class="docs-subtitle">Sélectionnez un projet pour accéder à sa documentation.</h2>
+    <h2 class="docs-subtitle">{docsSubtitle}</h2>
     {docsDesc && <p class="docs-desc">{docsDesc}</p>}
 
     <div class="project-grid">

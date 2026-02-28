@@ -764,12 +764,18 @@ db.insert(schema.settings)
   .values({ key: "maintenance", value: "false" })
   .run();
 db.insert(schema.settings)
+  .values({ key: "articlesSubtitle", value: "Notes techniques et retours d'expérience." })
+  .run();
+db.insert(schema.settings)
   .values({ key: "articlesDesc", value: "Retours d'expérience, analyses et guides pratiques autour du DevOps, de l'administration système et du développement web. Chaque article détaille un problème rencontré en production, une architecture mise en place ou un outil évalué sur le terrain." })
+  .run();
+db.insert(schema.settings)
+  .values({ key: "docsSubtitle", value: "Guides techniques et références pour chaque projet." })
   .run();
 db.insert(schema.settings)
   .values({ key: "docsDesc", value: "Chaque projet dispose de sa propre documentation technique : guides d'installation, architecture, configuration et références d'API. Ces documentations sont rédigées à partir de l'expérience acquise en production." })
   .run();
-console.log("  Settings: 3 rows");
+console.log("  Settings: 5 rows");
 
 console.log("Seed complete!");
 sqlite.close();

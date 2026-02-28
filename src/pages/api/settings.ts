@@ -21,7 +21,7 @@ export const PUT: APIRoute = async ({ request }) => {
   const body = (await request.json()) as Record<string, unknown>;
 
   // Allowed settings keys
-  const allowedKeys = ["maintenance", "articlesDesc", "docsDesc"];
+  const allowedKeys = ["maintenance", "articlesSubtitle", "articlesDesc", "docsSubtitle", "docsDesc"];
 
   for (const key of allowedKeys) {
     if (body[key] !== undefined) {

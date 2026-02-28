@@ -80,6 +80,8 @@ const docsWithHistory = await Promise.all(
 const docMap = new Map(docsWithHistory.map((d) => [d.id, d]));
 const visibleCount = allDocs.filter((d) => d.visible).length;
 const sectionNames = [...sectionMap.keys()];
+const docsSubtitleRow = await db.select().from(settings).where(eq(settings.key, "docsSubtitle")).get();
+const docsSubtitle = docsSubtitleRow?.value || "Guides techniques et références pour chaque projet.";
 const docsDescRow = await db.select().from(settings).where(eq(settings.key, "docsDesc")).get();
 const docsDesc = docsDescRow?.value || "";
 ---
@@ -96,9 +98,13 @@ const docsDesc = docsDescRow?.value || "";
       </div>
 
       <div class="desc-field">
-        <label class="desc-label" for="docs-desc">Description page docs</label>
+        <label class="desc-label" for="docs-subtitle">Sous-titre (H2)</label>
+        <input type="text" id="docs-subtitle" class="desc-input" value={docsSubtitle} />
+      </div>
+      <div class="desc-field">
+        <label class="desc-label" for="docs-desc">Description</label>
         <input type="text" id="docs-desc" class="desc-input" value={docsDesc} />
-        <button id="save-docs-desc" class="desc-save">Enregistrer</button>
+        <button id="save-docs-meta" class="desc-save">Enregistrer</button>
       </div>
 
       <!-- Project tabs -->
@@ -163,16 +169,17 @@ const docsDesc = docsDescRow?.value || "";
 </BaseLayout>
 
 <script is:inline>
-  // Save docs description
-  document.getElementById("save-docs-desc")?.addEventListener("click", async () => {
-    const val = document.getElementById("docs-desc").value;
+  // Save docs subtitle + description
+  document.getElementById("save-docs-meta")?.addEventListener("click", async () => {
+    const subtitle = document.getElementById("docs-subtitle").value;
+    const desc = document.getElementById("docs-desc").value;
     const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ docsDesc: val }),
+      body: JSON.stringify({ docsSubtitle: subtitle, docsDesc: desc }),
     });
     if (res.ok) {
-      const btn = document.getElementById("save-docs-desc");
+      const btn = document.getElementById("save-docs-meta");
       btn.textContent = "Enregistré";
       setTimeout(() => { btn.textContent = "Enregistrer"; }, 1500);
     }

@@ -5,6 +5,8 @@ import { posts, categories, settings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 const isAdmin = Astro.locals.isAdmin;
+const articlesSubtitleRow = await db.select().from(settings).where(eq(settings.key, "articlesSubtitle")).get();
+const articlesSubtitle = articlesSubtitleRow?.value || "Notes techniques et retours d'expérience.";
 const articlesDescRow = await db.select().from(settings).where(eq(settings.key, "articlesDesc")).get();
 const articlesDesc = articlesDescRow?.value || "";
 
@@ -34,7 +36,7 @@ const allPosts = isAdmin
   <div class="blog-list">
     <div class="blog-header">
       <h1 class="blog-title">Articles<span class="dot">.</span></h1>
-      <h2 class="blog-subtitle">Notes techniques et retours d'expérience.</h2>
+      <h2 class="blog-subtitle">{articlesSubtitle}</h2>
       {articlesDesc && <p class="blog-desc">{articlesDesc}</p>}
     </div>
 

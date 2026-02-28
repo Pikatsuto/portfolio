@@ -39,6 +39,8 @@ const postsWithHistory = await Promise.all(
 );
 
 const visibleCount = allPosts.filter((p) => p.visible).length;
+const articlesSubtitleRow = await db.select().from(settings).where(eq(settings.key, "articlesSubtitle")).get();
+const articlesSubtitle = articlesSubtitleRow?.value || "Notes techniques et retours d'expérience.";
 const articlesDescRow = await db.select().from(settings).where(eq(settings.key, "articlesDesc")).get();
 const articlesDesc = articlesDescRow?.value || "";
 ---
@@ -55,9 +57,13 @@ const articlesDesc = articlesDescRow?.value || "";
       </div>
 
       <div class="desc-field">
-        <label class="desc-label" for="articles-desc">Description page articles</label>
+        <label class="desc-label" for="articles-subtitle">Sous-titre (H2)</label>
+        <input type="text" id="articles-subtitle" class="desc-input" value={articlesSubtitle} />
+      </div>
+      <div class="desc-field">
+        <label class="desc-label" for="articles-desc">Description</label>
         <input type="text" id="articles-desc" class="desc-input" value={articlesDesc} />
-        <button id="save-articles-desc" class="desc-save">Enregistrer</button>
+        <button id="save-articles-meta" class="desc-save">Enregistrer</button>
       </div>
 
       <div class="post-list">
@@ -94,16 +100,17 @@ const articlesDesc = articlesDescRow?.value || "";
 </BaseLayout>
 
 <script is:inline>
-  // Save articles description
-  document.getElementById("save-articles-desc")?.addEventListener("click", async () => {
-    const val = document.getElementById("articles-desc").value;
+  // Save articles subtitle + description
+  document.getElementById("save-articles-meta")?.addEventListener("click", async () => {
+    const subtitle = document.getElementById("articles-subtitle").value;
+    const desc = document.getElementById("articles-desc").value;
     const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ articlesDesc: val }),
+      body: JSON.stringify({ articlesSubtitle: subtitle, articlesDesc: desc }),
     });
     if (res.ok) {
-      const btn = document.getElementById("save-articles-desc");
+      const btn = document.getElementById("save-articles-meta");
       btn.textContent = "Enregistré";
       setTimeout(() => { btn.textContent = "Enregistrer"; }, 1500);
     }
