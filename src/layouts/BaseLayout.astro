@@ -11,9 +11,11 @@ interface Props {
   description?: string;
   fullHeight?: boolean;
   noindex?: boolean;
+  ogType?: string;
+  ogImage?: string;
 }
 
-const { title, description = "Portfolio de Gabriel Guillou — DevOps, Sysadmin, Full-Stack", fullHeight = false, noindex = false } = Astro.props;
+const { title, description = "Portfolio de Gabriel Guillou — DevOps, Sysadmin, Full-Stack", fullHeight = false, noindex = false, ogType = "website", ogImage } = Astro.props;
 const currentPath = Astro.url.pathname;
 const canonicalUrl = new URL(currentPath, Astro.site).href;
 const isAdmin = Astro.locals.isAdmin;
@@ -43,19 +45,24 @@ const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex, follow" />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#0c0c12" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f0f0f4" media="(prefers-color-scheme: light)" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content={new URL("/og-image.png", Astro.site).href} />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:image" content={new URL(ogImage || "/og-image.png", Astro.site).href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL("/og-image.png", Astro.site).href} />
+    <meta name="twitter:image" content={new URL(ogImage || "/og-image.png", Astro.site).href} />
     <link rel="canonical" href={canonicalUrl} />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="preload" as="font" href="/fonts/source-serif-4-latin.woff2" type="font/woff2" crossorigin />
     <link rel="preload" as="font" href="/fonts/dm-sans-latin.woff2" type="font/woff2" crossorigin />
     <script is:inline>
@@ -72,8 +79,30 @@ const searchPostsSafe = searchPosts.map(p => ({ ...p, cat: p.cat ?? "" }));
     </script>
   </head>
   <body style={fullHeight ? "display: flex; flex-direction: column; height: 100vh; overflow: hidden;" : ""}>
+    <a href="#main-content" class="skip-link">Aller au contenu</a>
     <Nav currentPath={currentPath} isAdmin={isAdmin} maintenance={maintenance} searchPosts={searchPostsSafe} />
-    <slot />
+    <main id="main-content" style={fullHeight ? "flex: 1; overflow: hidden; display: flex; flex-direction: column;" : ""}>
+      <slot />
+    </main>
     {!fullHeight && <Footer />}
   </body>
 </html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: var(--blue);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    border-radius: 0 0 4px 0;
+  }
+  .skip-link:focus {
+    left: 0;
+  }
+</style>

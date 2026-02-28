@@ -1,0 +1,77 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Page introuvable — Gabriel Guillou" noindex>
+  <div class="not-found">
+    <span class="code">404</span>
+    <h1 class="message">Page introuvable<span class="dot">.</span></h1>
+    <p class="desc">La page que vous cherchez n'existe pas ou a été déplacée.</p>
+    <a href="/" class="back-link">Retour à l'accueil</a>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found {
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+    padding: 8rem 3rem;
+    text-align: center;
+  }
+
+  .code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6rem;
+    font-weight: 700;
+    color: var(--line);
+    line-height: 1;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  .message {
+    font-family: 'Source Serif 4', serif;
+    font-size: var(--fs-display);
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 1rem;
+  }
+
+  .dot {
+    color: var(--blue);
+  }
+
+  .desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-body);
+    color: var(--tertiary);
+    margin-bottom: 2.5rem;
+  }
+
+  .back-link {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    color: var(--blue);
+    text-decoration: none;
+    border: 1px solid color-mix(in srgb, var(--blue) 27%, transparent);
+    padding: 0.5rem 1.5rem;
+    border-radius: 5px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .back-link:hover {
+    background: color-mix(in srgb, var(--blue) 8%, transparent);
+    color: var(--blue-hover);
+  }
+
+  @media (max-width: 768px) {
+    .not-found {
+      padding: 4rem 1.2rem;
+    }
+
+    .code {
+      font-size: 4rem;
+    }
+  }
+</style>

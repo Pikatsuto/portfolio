@@ -1,0 +1,11 @@
+{
+  "name": "Gabriel Guillou",
+  "short_name": "Gabriel G.",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "theme_color": "#0c0c12",
+  "background_color": "#0c0c12",
+  "display": "browser"
+}
