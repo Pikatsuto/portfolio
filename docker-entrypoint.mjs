@@ -14,13 +14,20 @@ sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
 migrate(drizzle(sqlite), { migrationsFolder: "src/db/migrations" });
 
-// Seed if database is empty
+// Seed only if database is truly empty (no tables at all)
 let needsSeed = false;
 try {
   const row = sqlite.prepare("SELECT COUNT(*) as c FROM posts").get();
   needsSeed = row.c === 0;
 } catch {
-  needsSeed = true;
+  // SELECT failed — likely table doesn't exist yet. Check if ANY table exists.
+  try {
+    const tableCount = sqlite.prepare("SELECT COUNT(*) as c FROM sqlite_master WHERE type='table'").get();
+    needsSeed = tableCount.c === 0;
+  } catch {
+    // Can't even query sqlite_master — database is truly empty/fresh
+    needsSeed = true;
+  }
 }
 sqlite.close();
 
