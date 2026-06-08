@@ -60,6 +60,7 @@ export const POST: APIRoute = async ({ request }) => {
     section: string;
     title: string;
     content: string;
+    displayName?: string;
   };
 
   const id = `${body.project}-${body.title}`
@@ -67,7 +68,7 @@ export const POST: APIRoute = async ({ request }) => {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-  const projectId = await resolveProjectId(body.project);
+  const projectId = await resolveProjectId(body.project, body.displayName);
   const sectionId = await resolveSectionId(projectId, body.section);
 
   // Determine sort order: max + 1 within section

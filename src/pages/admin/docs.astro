@@ -172,6 +172,10 @@ const docsDesc = docsDescRow?.value || "";
 </BaseLayout>
 
 <script is:inline>
+  function toKebab(str) {
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
   // Save docs subtitle + description
   document.getElementById("save-docs-meta")?.addEventListener("click", async () => {
     const subtitle = document.getElementById("docs-subtitle").value;
@@ -190,19 +194,24 @@ const docsDesc = docsDescRow?.value || "";
 
   // New project
   document.getElementById("new-project-btn")?.addEventListener("click", async () => {
-    const name = await window.__promptModal("Nom du nouveau projet :");
-    if (!name || !name.trim()) return;
+    const displayName = (await window.__promptModal("Nom du nouveau projet :", "Nouveau projet") || "").trim();
+    if (!displayName) return;
+    const defaultSlug = toKebab(displayName);
+    const slug = toKebab((await window.__promptModal("Slug unique (ex: mon-projet) :", defaultSlug) || "").trim());
+    if (!slug) return;
+    const project = slug;
     const res = await fetch("/api/docs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        project: name.trim(),
+        project,
+        displayName,
         section: "Démarrage",
         title: "Introduction",
         content: "Commencez à écrire...",
       }),
     });
-    if (res.ok) window.location.href = `/admin/docs?project=${encodeURIComponent(name.trim())}`;
+    if (res.ok) window.location.href = `/admin/docs?project=${encodeURIComponent(project)}`;
   });
 
   // New section

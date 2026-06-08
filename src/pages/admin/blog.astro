@@ -100,6 +100,10 @@ const articlesDesc = articlesDescRow?.value || "";
 </BaseLayout>
 
 <script is:inline>
+  function toKebab(str) {
+    return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
   // Save articles subtitle + description
   document.getElementById("save-articles-meta")?.addEventListener("click", async () => {
     const subtitle = document.getElementById("articles-subtitle").value;
@@ -118,18 +122,17 @@ const articlesDesc = articlesDescRow?.value || "";
 
   // New post
   document.getElementById("new-post-btn")?.addEventListener("click", async () => {
-    const title = await window.__promptModal("Titre de l'article :", "Nouvel article");
+    const title = (await window.__promptModal("Titre de l'article :", "Nouvel article") || "").trim();
     if (!title) return;
-    
-    const defaultSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const slug = await window.__promptModal("Slug unique (ex: mon-article) :", defaultSlug);
+    const defaultSlug = toKebab(title);
+    const slug = toKebab((await window.__promptModal("Slug unique (ex: mon-article) :", defaultSlug) || "").trim());
     if (!slug) return;
     
     const res = await fetch("/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title,
+        title: title,
         slug,
         date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
         cat: "Draft",

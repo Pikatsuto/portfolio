@@ -29,7 +29,7 @@ export async function resolveCategoryId(name: string): Promise<number> {
 /**
  * Resolve a project name to its ID, creating it if it doesn't exist.
  */
-export async function resolveProjectId(name: string): Promise<number> {
+export async function resolveProjectId(name: string, displayName?: string): Promise<number> {
   const existing = await db
     .select({ id: projects.id })
     .from(projects)
@@ -40,6 +40,7 @@ export async function resolveProjectId(name: string): Promise<number> {
   const now = new Date().toISOString();
   await db.insert(projects).values({
     name,
+    displayName: displayName || "",
     visible: true,
     sortOrder: 0,
     createdAt: now,
