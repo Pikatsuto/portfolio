@@ -525,24 +525,32 @@ const docsDesc = docsDescRow?.value || "";
     background: transparent;
     border: 1px solid transparent;
     color: var(--tertiary);
-    opacity: 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    line-height: inherit;
     cursor: pointer;
-    font-size: var(--fs-xxs);
-    padding: 0.4rem 0.5rem;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-    transition: opacity 0.2s, color 0.2s, background 0.2s, border-color 0.2s;
-  }
-
-  .project-tab-wrapper:hover .delete-project-btn {
-    opacity: 0.5;
+    padding: 0.4rem 0.4rem;
+    opacity: 1;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
   }
 
   .delete-project-btn:hover {
-    opacity: 1 !important;
     color: var(--red);
-    background: rgba(248, 113, 113, 0.08);
-    border-color: rgba(248, 113, 113, 0.25);
+    background: color-mix(in srgb, var(--red) 8%, transparent);
+    border-color: color-mix(in srgb, var(--red) 25%, transparent);
+  }
+
+  .project-tab.active + .delete-project-btn {
+    color: var(--red);
+    background: color-mix(in srgb, var(--red) 8%, transparent);
+    border-color: color-mix(in srgb, var(--red) 25%, transparent);
+  }
+
+  .project-tab.active + .delete-project-btn:hover {
+    background: color-mix(in srgb, var(--red) 15%, transparent);
+    border-color: color-mix(in srgb, var(--red) 40%, transparent);
   }
 
   .project-tab {
