@@ -196,10 +196,7 @@ const docsDesc = docsDescRow?.value || "";
   document.getElementById("new-project-btn")?.addEventListener("click", async () => {
     const displayName = (await window.__promptModal("Nom du nouveau projet :", "Nouveau projet") || "").trim();
     if (!displayName) return;
-    const defaultSlug = toKebab(displayName);
-    const slug = toKebab((await window.__promptModal("Slug unique (ex: mon-projet) :", defaultSlug) || "").trim());
-    if (!slug) return;
-    const project = slug;
+    const project = toKebab(displayName);
     const res = await fetch("/api/docs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -219,7 +216,7 @@ const docsDesc = docsDescRow?.value || "";
     const name = await window.__promptModal("Nom de la nouvelle section :");
     if (!name || !name.trim()) return;
     const params = new URLSearchParams(window.location.search);
-    const project = params.get("project") || document.querySelector(".project-tab.active")?.textContent?.trim()?.split(/\d/)[0]?.trim();
+    const project = params.get("project") || document.querySelector(".project-tab.active")?.getAttribute("data-project");
     if (!project) return;
     const res = await fetch("/api/docs", {
       method: "POST",
@@ -239,13 +236,15 @@ const docsDesc = docsDescRow?.value || "";
     btn.addEventListener("click", async () => {
       const project = btn.getAttribute("data-project");
       const section = btn.getAttribute("data-section");
+      const title = (await window.__promptModal("Titre de la page :", "Nouvelle page") || "").trim();
+      if (!title) return;
       const res = await fetch("/api/docs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           project,
           section,
-          title: "Nouvelle page",
+          title,
           content: "Commencez à écrire...",
         }),
       });

@@ -124,9 +124,7 @@ const articlesDesc = articlesDescRow?.value || "";
   document.getElementById("new-post-btn")?.addEventListener("click", async () => {
     const title = (await window.__promptModal("Titre de l'article :", "Nouvel article") || "").trim();
     if (!title) return;
-    const defaultSlug = toKebab(title);
-    const slug = toKebab((await window.__promptModal("Slug unique (ex: mon-article) :", defaultSlug) || "").trim());
-    if (!slug) return;
+    const slug = toKebab(title);
     
     const res = await fetch("/api/posts", {
       method: "POST",
