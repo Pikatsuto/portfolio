@@ -110,13 +110,16 @@ const docsDesc = docsDescRow?.value || "";
       <!-- Project tabs -->
       <div class="project-tabs">
         {allProjectNames.map((proj) => (
-          <a
-            href={`/admin/docs?project=${encodeURIComponent(proj)}`}
-            class:list={["project-tab", { active: proj === activeProject }]}
-          >
-            {projDisplayMap.get(proj) || proj}
-            <span class="tab-count">{projectDocCounts.get(proj) || 0}</span>
-          </a>
+          <div class="project-tab-wrapper">
+            <a
+              href={`/admin/docs?project=${encodeURIComponent(proj)}`}
+              class:list={["project-tab", { active: proj === activeProject }]}
+            >
+              {projDisplayMap.get(proj) || proj}
+              <span class="tab-count">{projectDocCounts.get(proj) || 0}</span>
+            </a>
+            <button class="delete-project-btn" data-project={proj} title="Supprimer le projet">&times;</button>
+          </div>
         ))}
       </div>
 
@@ -377,6 +380,23 @@ const docsDesc = docsDescRow?.value || "";
     });
   });
 
+
+  // Delete project
+  document.querySelectorAll(".delete-project-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const project = btn.getAttribute("data-project");
+      if (!project) return;
+      if (!(await window.__confirmModal(`⚠️ Supprimer le projet "${project}" ? Toutes ses sections et pages seront supprimées.`))) return;
+      const res = await fetch("/api/docs/project", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project }),
+      });
+      if (res.ok) window.location.reload();
+    });
+  });
 </script>
 
 <style>
@@ -486,6 +506,43 @@ const docsDesc = docsDescRow?.value || "";
     margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--line);
     padding-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .project-tab-wrapper {
+    display: flex;
+    align-items: center;
+  }
+
+  .project-tab-wrapper .project-tab {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+    padding-right: 0.6rem;
+  }
+
+  .delete-project-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--tertiary);
+    opacity: 0;
+    cursor: pointer;
+    font-size: var(--fs-xxs);
+    padding: 0.4rem 0.5rem;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    transition: opacity 0.2s, color 0.2s, background 0.2s, border-color 0.2s;
+  }
+
+  .project-tab-wrapper:hover .delete-project-btn {
+    opacity: 0.5;
+  }
+
+  .delete-project-btn:hover {
+    opacity: 1 !important;
+    color: var(--red);
+    background: rgba(248, 113, 113, 0.08);
+    border-color: rgba(248, 113, 113, 0.25);
   }
 
   .project-tab {

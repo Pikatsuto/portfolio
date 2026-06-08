@@ -56,6 +56,7 @@ export const GET: APIRoute = async ({ request }) => {
 export const POST: APIRoute = async ({ request }) => {
   const body = (await request.json()) as {
     title: string;
+    slug?: string;
     date: string;
     cat: string;
     time: string;
@@ -63,10 +64,9 @@ export const POST: APIRoute = async ({ request }) => {
     content: string;
   };
 
-  const id = body.title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  const id = body.slug
+    ? body.slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+    : body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
   const now = new Date().toISOString();
   const categoryId = await resolveCategoryId(body.cat);

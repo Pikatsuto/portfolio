@@ -118,11 +118,19 @@ const articlesDesc = articlesDescRow?.value || "";
 
   // New post
   document.getElementById("new-post-btn")?.addEventListener("click", async () => {
+    const title = await window.__promptModal("Titre de l'article :", "Nouvel article");
+    if (!title) return;
+    
+    const defaultSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const slug = await window.__promptModal("Slug unique (ex: mon-article) :", defaultSlug);
+    if (!slug) return;
+    
     const res = await fetch("/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: "Nouvel article",
+        title,
+        slug,
         date: new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
         cat: "Draft",
         time: "? min",
