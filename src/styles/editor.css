@@ -287,3 +287,11 @@
     display: none;
   }
 }
+/* ── Editor preview: darken th to distinguish from preview surface ── */
+.editor-preview th {
+  background: color-mix(in srgb, var(--surface) 70%, black);
+}
+
+.editor-preview--full th {
+  background: color-mix(in srgb, var(--bg) 70%, black);
+}
