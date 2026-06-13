@@ -117,6 +117,12 @@ export async function renderMarkdown(md: string): Promise<string> {
       codespan({ text }) {
         return `<code class="md-inline-code">${text}</code>`;
       },
+      link({ href, text }) {
+        if (href.startsWith("mailto:") || href.startsWith("tel:")) {
+          return text;
+        }
+        return `<a href="${href}">${text}</a>`;
+      },
     },
   });
 
