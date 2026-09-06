@@ -8,7 +8,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     volumes:
       - /var/lib/stack/portfolio:/app/data
-    expose:
+    ports:
       - "4321"
     labels:
       - traefik.http.services.app.loadbalancer.server.port=4321
