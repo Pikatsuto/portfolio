@@ -7,7 +7,7 @@ services:
       - PORT=4321
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     volumes:
-      - /mnt/SSD/DockerSSD/portfolio:/app/data
+      - /var/lib/stack/portfolio:/app/data
     expose:
       - "4321"
     labels:
