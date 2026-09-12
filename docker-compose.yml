@@ -7,7 +7,7 @@ services:
       - PORT=4321
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     volumes:
-      - /var/lib/stack/portfolio:/app/data
+      - /var/lib/stack/portfolio/data:/app/data
     expose:
       - "4321"
     labels:
